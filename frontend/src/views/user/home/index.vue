@@ -116,6 +116,22 @@
       </div>
     </section>
 
+    <!-- ── 全局地图 ── -->
+    <section class="home-map" ref="homeMapRef">
+      <div class="map-head">
+        <div class="sec-label"><span>03</span><span>地图导览</span></div>
+        <h2>景点 & 酒店分布</h2>
+        <p>探索热门景点与精品酒店的位置</p>
+      </div>
+      <div class="map-legend">
+        <span class="legend-item"><span class="dot spot-dot"></span>景点</span>
+        <span class="legend-item"><span class="dot hotel-dot"></span>酒店</span>
+      </div>
+      <div class="home-map-wrap">
+        <div id="home-amap" class="home-amap"></div>
+      </div>
+    </section>
+
     <!-- ── CTA ── -->
     <section class="cta" ref="ctaRef">
       <div class="cta-inner">
@@ -143,6 +159,7 @@ import { useRouter } from 'vue-router'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { splitTextByWord } from '@/composables/useGsapAnimation'
+import { useAmap } from '@/composables/useAmap'
 import { getHotSpotsApi } from '@/api/spot'
 import { getHotHotelsApi } from '@/api/hotel'
 import { getDashboardData } from '@/api/admin'
@@ -185,6 +202,7 @@ const ctaRef = ref<HTMLElement | null>(null)
 const ctaTitleRef = ref<HTMLElement | null>(null)
 const ctaDescRef = ref<HTMLElement | null>(null)
 const ctaBtnsRef = ref<HTMLElement | null>(null)
+const homeMapRef = ref<HTMLElement | null>(null)
 
 const heroImages = [
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
@@ -465,6 +483,8 @@ async function fetchHomeData() {
       price: s.ticketPrice,
       score: '4.8',
       img: s.coverImage || `https://picsum.photos/seed/spot${s.id}/600/400`,
+      longitude: s.longitude ? Number(s.longitude) : 116.397428,
+      latitude: s.latitude ? Number(s.latitude) : 39.90923,
     }))
 
     // 填充酒店数据
@@ -478,10 +498,28 @@ async function fetchHomeData() {
       price: 0,
       badge: ['人气之选', '网红打卡', '奢华体验', '最佳口碑'][i] || '推荐',
       img: h.coverImage || `https://picsum.photos/seed/hotel${h.id}/500/400`,
+      longitude: h.longitude ? Number(h.longitude) : 116.397428,
+      latitude: h.latitude ? Number(h.latitude) : 39.90923,
     }))
 
     // 数据加载完后重新初始化动画
-    nextTick(() => initGsapAnimations())
+    nextTick(() => {
+      initGsapAnimations()
+      // 初始化首页聚合地图
+      const allMarkers = [
+        ...spots.value.map((s: any) => ({ lng: s.longitude, lat: s.latitude, title: s.name, type: 'spot' as const })),
+        ...hotels.value.map((h: any) => ({ lng: h.longitude, lat: h.latitude, title: h.name, type: 'hotel' as const })),
+      ]
+      if (allMarkers.length > 0) {
+        const { initMap } = useAmap('home-amap', {
+          longitude: 116.397428,
+          latitude: 39.90923,
+          zoom: 10,
+          markers: allMarkers,
+        })
+        setTimeout(initMap, 500)
+      }
+    })
   } catch (e) {
     console.error('加载首页数据失败', e)
     // 失败时也初始化动画，避免界面卡住
@@ -743,4 +781,78 @@ onUnmounted(() => {
 .page-foot { padding: 48px 60px; background: #0a0a1a; text-align: center; }
 .foot-logo { font-size: 20px; font-weight: 900; color: white; letter-spacing: 4px; margin-bottom: 12px; }
 .page-foot p { font-size: 13px; color: rgba(255,255,255,0.3); }
+
+/* ── 首页地图 ── */
+.home-map {
+  background: #f8fafc;
+  padding: 80px 24px;
+  text-align: center;
+
+  .map-head {
+    .sec-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #667eea;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-weight: 700;
+    }
+
+    h2 {
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 900;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+
+    p {
+      font-size: 16px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+  }
+
+  .map-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 600;
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .spot-dot { background: #3b82f6; }
+      .hotel-dot { background: #f97316; }
+    }
+  }
+
+  .home-map-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+    border: 1px solid #f1f5f9;
+  }
+
+  .home-amap {
+    width: 100%;
+    height: 450px;
+    background: #e8f4f8;
+  }
+}
 </style>

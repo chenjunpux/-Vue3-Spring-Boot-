@@ -1,6 +1,8 @@
-# 🧳 智慧旅游管理系统 - 设计文档（V3.0 正式版）
+# 🧳 智慧旅游管理系统 - 设计文档（V3.2 正式版）
 
-> 适合冲优秀毕业设计 | 技术栈：Vue3+TS+Spring Boot 3 | 版本：V3.0 | 日期：2026-04-07
+> 适合冲优秀毕业设计 | 技术栈：Vue3+TS+Spring Boot 3 | 版本：V3.2 | 日期：2026-04-08
+
+**GitHub 仓库：** https://github.com/chenjunpux/-Vue3-Spring-Boot-
 
 ---
 
@@ -18,8 +20,10 @@
 - ✅ 提供**数据可视化驾驶舱**（ECharts 大屏）
 - ✅ 实现**完整预订支付流程**（景点/酒店预订 → 订单确认 → 支付/取消）
 - ✅ 实现**文件存储服务**（本地存储 + 文件管理）
-- ✅ 实现**消息通知系统**（站内通知、系统公告）
-- ✅ 实现**优惠券系统**（满减/折扣/兑换）
+- ✅ 实现**消息通知系统**（站内通知、系统公告、MQ异步推送）
+- ✅ 实现**优惠券系统**（满减/折扣/兑换，实时抵扣）
+- ✅ 实现**管理员通知管理**（发布/草稿/推送全用户或指定用户）
+- ✅ 实现**蓝橙撞色UI重设计**（活力明快风格，年轻人友好）
 
 ### 1.3 预期成果
 
@@ -400,12 +404,13 @@
 |------|------|------|
 | id | BIGINT | 通知ID |
 | user_id | BIGINT | 接收用户ID |
-| type | VARCHAR(30) | 通知类型 |
+| type | VARCHAR(50) | 通知类型(1系统/2订单/3活动) |
 | title | VARCHAR(200) | 通知标题 |
 | content | TEXT | 通知内容 |
-| related_id | BIGINT | 关联ID |
-| is_read | TINYINT | 是否已读 |
+| related_id | BIGINT | 关联ID(订单/景点等) |
+| is_read | INT | 是否已读(0未读/1已读) |
 | read_time | DATETIME | 阅读时间 |
+| created_at | DATETIME | 创建时间 |
 
 #### 16. 系统通知表 (system_notifications)
 | 字段 | 类型 | 说明 |
@@ -413,14 +418,13 @@
 | id | BIGINT | 系统通知ID |
 | title | VARCHAR(200) | 通知标题 |
 | content | TEXT | 通知内容 |
-| type | VARCHAR(30) | 通知类型 |
-| target_users | VARCHAR(50) | 推送目标 |
-| cover_image | VARCHAR(500) | 封面图 |
-| link_url | VARCHAR(500) | 跳转链接 |
-| is_published | TINYINT | 是否发布 |
+| type | INT | 类型(1系统/2订单/3活动) |
+| target_type | INT | 发送范围(1全部/2指定用户) |
+| target_user_ids | TEXT | 指定用户ID列表(JSON) |
+| status | INT | 状态(0草稿/1已发布) |
 | published_at | DATETIME | 发布时间 |
-| start_time | DATETIME | 展示开始时间 |
-| end_time | DATETIME | 展示结束时间 |
+| created_at | DATETIME | 创建时间 |
+| updated_at | DATETIME | 更新时间 |
 
 #### 17. 文件表 (files)
 | 字段 | 类型 | 说明 |
@@ -599,8 +603,22 @@
 | GET | `/api/v1/notification/unread/count` | 未读数量 |
 | PUT | `/api/v1/notification/{id}/read` | 标记已读 |
 | PUT | `/api/v1/notification/read/all` | 全部已读 |
+| DELETE | `/api/v1/notification/{id}` | 删除通知 |
 
-### 5.10 文件模块
+### 5.10 管理员通知模块
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/admin/notification/list` | 分页查询通知列表 |
+| GET | `/api/v1/admin/notification/{id}` | 获取通知详情 |
+| POST | `/api/v1/admin/notification/save` | 创建/更新通知 |
+| POST | `/api/v1/admin/notification/{id}/publish` | 发布通知 |
+| POST | `/api/v1/admin/notification/draft` | 保存草稿 |
+| DELETE | `/api/v1/admin/notification/{id}` | 删除通知 |
+
+### 5.11 文件模块
+
+### 5.11 文件模块
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -608,7 +626,7 @@
 | POST | `/api/v1/file/upload/multiple` | 多文件上传 |
 | DELETE | `/api/v1/file/{id}` | 删除文件 |
 
-### 5.11 搜索模块
+### 5.12 搜索模块
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -617,7 +635,7 @@
 | GET | `/api/v1/search/hotels` | 搜索酒店 |
 | GET | `/api/v1/search/articles` | 搜索游记 |
 
-### 5.12 统计模块
+### 5.13 统计模块
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -667,7 +685,60 @@
 
 ---
 
-## 七、项目结构
+## 七、UI 设计特色
+
+### 7.1 配色体系
+
+| 配色 | 色值 | 用途 |
+|------|------|------|
+| 主色蓝 | `#3b82f6` | 按钮、图标、选中态 |
+| 辅色橙 | `#f97316` | 价格、重点强调、渐变 |
+| 渐变蓝橙 | `linear-gradient(135deg, #3b82f6, #f97316)` | 按钮、头像环 |
+| 背景浅蓝 | `#f0f4ff` | 页面背景 |
+| 背景浅橙 | `#fff8f5` | 页面背景渐变 |
+| 背景浅紫 | `#f5f0ff` | 页面背景渐变 |
+| 文字深 | `#1e293b` | 标题、正文 |
+| 文字次 | `#64748b` | 副标题、标签 |
+| 文字弱 | `#94a3b8` | 占位符、提示语 |
+
+### 7.2 支付页面设计（/book/:type/:id）
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  [统一大白色卡片 - 28px圆角 - 阴影柔和]                    │
+│  ┌─────────────────────────────┬───────────────────────┐   │
+│  │ 左侧 55%                   │ 右侧 45%              │   │
+│  │ 预订信息                    │ 费用明细              │   │
+│  │  · 商品卡片(180x140图片)   │  · 门票 × 数量       │   │
+│  │  · 游玩日期/人数选择器     │  · 优惠券抵扣         │   │
+│  │  · 联系人表单              │  · 合计金额           │   │
+│  │  · 优惠券展开选择器        │ 支付方式              │   │
+│  │     (虚线分隔 #e8eef8)    │  · 微信/支付宝/银行卡 │   │
+│  │                            │  [渐变按钮]立即支付   │   │
+│  └─────────────────────────────┴───────────────────────┘   │
+└────────────────────────────────────────────────────────────┘
+```
+
+### 7.3 AI 聊天页面设计（/chat）
+
+- **顶部**：旋转渐变头像光环 + 在线绿点指示
+- **欢迎页**：太阳光芒旋转动画 + 浮动装饰图标（✈️☀️🍜🏨⛰️）
+- **气泡**：AI 白色气泡（左对齐）| 用户橙色渐变气泡（右对齐）
+- **快捷卡片**：悬停上浮 + 箭头跟随动画
+- **发送按钮**：灰 → 蓝橙渐变（激活态）
+- **背景**：浅蓝 + 浅橙 + 浅紫 三色渐变 + 装饰圆形
+
+### 7.4 管理员通知面板
+
+- **触发**：顶部导航栏 🔔 按钮
+- **展示**：右侧抽屉（el-drawer）380px
+- **内容**：通知列表 + 时间相对显示（刚刚/5分钟前/1小时前）
+- **状态**：未读蓝底 + 左侧蓝点；已读白色
+- **操作**：点击标记已读 / 一键全部已读 / 查看全部跳转
+
+---
+
+## 八、项目结构
 
 ### 7.1 后端结构
 
@@ -686,6 +757,7 @@ backend/
 │   │   └── WebMvcConfig.java
 │   ├── controller/
 │   │   ├── AIController.java
+│   │   ├── AdminNotificationController.java
 │   │   ├── AdminPaymentController.java
 │   │   ├── ArticleAdminController.java
 │   │   ├── ArticleController.java
@@ -736,6 +808,11 @@ backend/
 │   ├── security/
 │   │   ├── JwtAuthenticationFilter.java
 │   │   └── JwtUtils.java
+│   ├── mq/
+│   │   ├── NotificationMessageConsumer.java
+│   │   ├── NotificationMessageProducer.java
+│   │   ├── OrderMessageConsumer.java
+│   │   └── OrderMessageProducer.java
 │   └── service/
 │       ├── AIService.java
 │       ├── ArticleService.java
@@ -765,16 +842,18 @@ backend/
 frontend/
 ├── src/
 │   ├── api/
+│   │   ├── adminNotification.ts
 │   │   ├── admin.ts
 │   │   ├── ai.ts
 │   │   ├── article.ts
 │   │   ├── auth.ts
 │   │   ├── axios.ts
 │   │   ├── coupon.ts
+│   │   ├── notification.ts
 │   │   ├──
 ---
 
-## 八、预订支付完整流程
+## 九、预订支付完整流程
 
 ### 8.1 流程图
 
@@ -819,7 +898,7 @@ frontend/
 
 ---
 
-## 九、项目运行状态
+## 十、项目运行状态
 
 ### 9.1 服务状态
 
@@ -844,7 +923,7 @@ frontend/
 
 ---
 
-## 十、毕设答辩亮点
+## 十一、毕设答辩亮点
 
 ### 10.1 技术亮点
 
@@ -885,22 +964,7 @@ frontend/
 
 ---
 
-## 十一、版本历史
-
-| 版本 | 日期 | 更新内容 |
-|------|------|---------|
-| V1.0 | 早期 | 基础 CRUD 功能 |
-| V2.0 | 2026-04-05 | 新增 13 张数据表，完善业务模块 |
-| V2.2 | 2026-04-06 | 预订支付完整流程，Admin 管理端重构 |
-| V3.0 | 2026-04-07 | 文档与实际实现完全同步，移除未实现功能描述 |
-
----
-
-**文档版本：V3.0 | 最后更新：2026-04-07**
-
----
-
-## 十二、Redis + Caffeine 多级缓存
+## 十三、Redis + Caffeine 多级缓存
 
 ### 12.1 缓存架构
 
@@ -960,7 +1024,7 @@ public void updateSpot(Spot spot) {
 
 ---
 
-## 十三、RabbitMQ 消息队列
+## 十四、RabbitMQ 消息队列
 
 ### 13.1 消息流转图
 
@@ -979,6 +1043,12 @@ public void updateSpot(Spot spot) {
 ┌──────────────┐     ┌─────────────────────────┐     ┌──────────────────┐
 │  订单退款    │ ──> │  order.refund.queue     │ ──> │  更新统计        │
 └──────────────┘     └─────────────────────────┘     └──────────────────┘
+
+┌──────────────────────────┐  ┌─────────────────────────┐  ┌──────────────────────┐
+│  管理员发布系统通知        │─>│  notification.exchange  │─>│  notification.queue  │
+│  (全部/指定用户)          │  │  (direct交换机)          │  │  → 批量插入通知      │
+└──────────────────────────┘  └─────────────────────────┘  │  → Redis幂等去重     │
+                                                            └──────────────────────┘
 ```
 
 ### 13.2 消息确认机制
@@ -1002,7 +1072,7 @@ public void updateSpot(Spot spot) {
 
 ---
 
-## 十四、MinIO 对象存储
+## 十五、MinIO 对象存储
 
 ### 14.1 存储桶设计
 
@@ -1039,7 +1109,7 @@ fetch(uploadUrl, { method: 'PUT', body: file })
 
 ---
 
-## 十五、Spring Retry 重试机制
+## 十六、Spring Retry 重试机制
 
 ### 15.1 重试策略
 
@@ -1072,7 +1142,7 @@ public boolean recoverProcessPaymentCallback(Exception e, String orderNo) {
 
 ---
 
-## 十六、Knife4j API 文档
+## 十七、Knife4j API 文档
 
 ### 16.1 访问地址
 
@@ -1098,7 +1168,7 @@ public Result<OrderVO> createSpotOrder(@RequestBody @Valid CreateOrderDTO dto) {
 
 ---
 
-## 十七、Docker 一键部署
+## 十八、Docker 一键部署
 
 ### 17.1 启动所有服务
 
@@ -1141,7 +1211,7 @@ docker-compose --profile tools up -d
 
 ---
 
-## 十八、版本历史
+## 十九、版本历史
 
 | 版本 | 日期 | 更新内容 |
 |------|------|---------|
@@ -1150,7 +1220,8 @@ docker-compose --profile tools up -d
 | V2.2 | 2026-04-06 | 预订支付完整流程，Admin 管理端重构 |
 | V3.0 | 2026-04-07 | 文档与实际实现同步 |
 | V3.1 | 2026-04-07 | 新增 Redis+Caffeine 缓存、RabbitMQ 消息队列、MinIO 对象存储、Spring Retry、Knife4j API 文档、Docker Compose |
+| V3.2 | 2026-04-08 | 支付页面蓝橙撞色UI重设计、AI聊天页面活力风格重设计、管理员通知系统完整实现（CRUD+MQ推送+通知面板） |
 
 ---
 
-**文档版本：V3.1 | 最后更新：2026-04-07**
+**文档版本：V3.2 | 最后更新：2026-04-08**

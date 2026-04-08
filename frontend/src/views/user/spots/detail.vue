@@ -81,6 +81,18 @@
       </div>
     </div>
 
+    <!-- ── 位置地图 ── -->
+    <div class="map-section" ref="mapSectionRef">
+      <div class="map-inner">
+        <div class="map-label">位置导航</div>
+        <h2 ref="mapTitleRef">景区位置</h2>
+        <p class="map-address">📍 {{ currentSpot.address }}</p>
+        <div class="map-container">
+          <div :id="spotMapId" class="amap-wrapper"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── CTA ── -->
     <div class="detail-cta" ref="ctaSectionRef">
       <div class="cta-content">
@@ -108,6 +120,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { getSpotDetailApi } from '@/api/spot'
 import { splitTextByWord } from '@/composables/useGsapAnimation'
+import { useAmap } from '@/composables/useAmap'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -162,6 +175,8 @@ const currentSpot = computed(() => {
       introStats: [],
       sections,
       practicalInfo,
+      longitude: s.longitude ? Number(s.longitude) : 116.397428,
+      latitude: s.latitude ? Number(s.latitude) : 39.90923,
     }
   }
   return { name: '', level: '', city: '', address: '', cover: '', score: '0', hotScore: 0, openTime: '', tags: [], ticketPrice: 0, description: '', introStats: [], sections: [], practicalInfo: [] }
@@ -186,7 +201,10 @@ const infoTitleRef = ref<HTMLElement | null>(null)
 const infoGridRef = ref<HTMLElement | null>(null)
 const ctaSectionRef = ref<HTMLElement | null>(null)
 const ctaTitleRef = ref<HTMLElement | null>(null)
+const spotMapId = 'spot-amap'
 const ctaDescRef = ref<HTMLElement | null>(null)
+const mapSectionRef = ref<HTMLElement | null>(null)
+const mapTitleRef = ref<HTMLElement | null>(null)
 
 
 // ─── GSAP 动画 ───────────────────────────────────────────────────────────────
@@ -324,6 +342,16 @@ function initGsapAnimations() {
     }
   }
 
+  // 地图
+  if (mapSectionRef.value) {
+    const mapTl = gsap.timeline({
+      scrollTrigger: { trigger: mapSectionRef.value, start: 'top 80%', once: true },
+    })
+    if (mapTitleRef.value) {
+      mapTl.fromTo(mapTitleRef.value, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' })
+    }
+  }
+
   // CTA
   if (ctaSectionRef.value) {
     const ctaTl = gsap.timeline({
@@ -353,7 +381,19 @@ async function fetchSpot() {
 
 onMounted(() => {
   fetchSpot().then(() => {
-    nextTick(() => initGsapAnimations())
+    nextTick(() => {
+      initGsapAnimations()
+      // 初始化高德地图
+      nextTick(() => {
+        const { initMap } = useAmap(spotMapId, {
+          longitude: currentSpot.value.longitude,
+          latitude: currentSpot.value.latitude,
+          zoom: 15,
+          title: currentSpot.value.name,
+        })
+        setTimeout(initMap, 300)
+      })
+    })
   })
 })
 
@@ -915,6 +955,53 @@ onUnmounted(() => {
       .info-title { font-size: 14px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
       .info-value { font-size: 15px; color: #1e293b; font-weight: 600; line-height: 1.5; }
     }
+  }
+}
+
+/* ── 位置地图 ── */
+.map-section {
+  background: #f8fafc;
+  padding: 80px 24px;
+
+  .map-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .map-label {
+    font-size: 13px;
+    color: #667eea;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 900;
+    color: #1e293b;
+    margin-bottom: 12px;
+  }
+
+  .map-address {
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 32px;
+  }
+
+  .map-container {
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+    border: 1px solid #f1f5f9;
+  }
+
+  .amap-wrapper {
+    width: 100%;
+    height: 400px;
+    background: #e8f4f8;
   }
 }
 
