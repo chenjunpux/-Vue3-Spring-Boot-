@@ -24,6 +24,8 @@
       <!-- 数据表格 -->
       <div class="admin-table">
         <el-table :data="tableData" v-loading="loading" stripe>
+          <el-table-column type="index" label="序号" width="70" align="center" />
+          <el-table-column prop="id" label="ID" width="80" align="center" />
           <el-table-column prop="orderNo" label="订单号" width="180" />
           <el-table-column prop="userId" label="用户ID" width="100" />
           <el-table-column prop="targetName" label="景点/酒店" min-width="150">
@@ -65,7 +67,8 @@
           v-model:page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next"
+          :page-count="pageCount"
+          layout="total, sizes, prev, pager, next, jumper"
           @size-change="fetchList"
           @current-change="fetchList"
         />
@@ -92,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAdminOrderList, refundOrder } from '@/api/admin'
 import dayjs from 'dayjs'
@@ -103,6 +106,7 @@ const statusFilter = ref<number | ''>('')
 const orderTypeFilter = ref<number | ''>('')
 const tableData = ref<any[]>([])
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
+const pageCount = computed(() => Math.ceil(pagination.total / pagination.pageSize) || 1)
 
 const detailVisible = ref(false)
 const currentOrder = ref<any>(null)
