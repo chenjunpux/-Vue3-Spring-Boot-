@@ -193,6 +193,280 @@ CREATE TABLE favorites (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收藏表';
 
 -- =============================================
+-- 9. 用户地址表
+-- =============================================
+CREATE TABLE user_addresses (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '地址ID',
+    user_id         BIGINT NOT NULL COMMENT '用户ID',
+    contact_name    VARCHAR(50) NOT NULL COMMENT '联系人姓名',
+    contact_phone   VARCHAR(20) NOT NULL COMMENT '联系人电话',
+    province        VARCHAR(50) COMMENT '省份',
+    city            VARCHAR(50) COMMENT '城市',
+    district        VARCHAR(50) COMMENT '区县',
+    detail_address  VARCHAR(500) NOT NULL COMMENT '详细地址',
+    is_default      TINYINT DEFAULT 0 COMMENT '是否默认地址 0否 1是',
+    tag             VARCHAR(50) COMMENT '地址标签(家/公司/其他)',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_user (user_id),
+    INDEX idx_default (user_id, is_default)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户地址表';
+
+-- ----------------------------
+-- 10. 景点门票类型表
+-- ----------------------------
+CREATE TABLE spot_tickets (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '门票类型ID',
+    spot_id         BIGINT NOT NULL COMMENT '景点ID',
+    name            VARCHAR(100) NOT NULL COMMENT '门票名称',
+    description     VARCHAR(500) COMMENT '门票描述',
+    price           DECIMAL(10,2) NOT NULL COMMENT '价格',
+    stock           INT DEFAULT -1 COMMENT '库存(-1不限)',
+    valid_days      INT DEFAULT 1 COMMENT '有效天数',
+    refundable      TINYINT DEFAULT 1 COMMENT '是否可退 0否 1是',
+    status          TINYINT DEFAULT 1 COMMENT '1上架 0下架',
+    sort_order      INT DEFAULT 0 COMMENT '排序',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_spot (spot_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='景点门票类型表';
+
+-- ----------------------------
+-- 11. 景点开放时间表
+-- ----------------------------
+CREATE TABLE spot_schedules (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '开放时间ID',
+    spot_id         BIGINT NOT NULL COMMENT '景点ID',
+    day_of_week     TINYINT COMMENT '星期几(1-7, null表示全部)',
+    start_time      VARCHAR(10) NOT NULL COMMENT '开始时间 HH:mm',
+    end_time        VARCHAR(10) NOT NULL COMMENT '结束时间 HH:mm',
+    is_closed       TINYINT DEFAULT 0 COMMENT '是否闭园 0开园 1闭园',
+    description     VARCHAR(200) COMMENT '特殊说明',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_spot (spot_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='景点开放时间表';
+
+-- ----------------------------
+-- 12. 房间库存表
+-- ----------------------------
+CREATE TABLE room_inventory (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '库存ID',
+    room_type_id    BIGINT NOT NULL COMMENT '房型ID',
+    inventory_date  DATE NOT NULL COMMENT '库存日期',
+    available_rooms INT NOT NULL COMMENT '可用房间数',
+    price           DECIMAL(10,2) COMMENT '当日价格(为空则用房型原价)',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    UNIQUE KEY uk_room_date (room_type_id, inventory_date),
+    INDEX idx_date (inventory_date),
+    INDEX idx_room (room_type_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='房间库存表';
+
+-- ----------------------------
+-- 13. 订单明细表
+-- ----------------------------
+CREATE TABLE order_items (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '订单明细ID',
+    order_id        BIGINT NOT NULL COMMENT '订单ID',
+    item_type       TINYINT NOT NULL COMMENT '1景点门票 2酒店房间',
+    item_id         BIGINT NOT NULL COMMENT '门票ID或房型ID',
+    item_name       VARCHAR(200) NOT NULL COMMENT '商品名称',
+    quantity        INT NOT NULL DEFAULT 1 COMMENT '数量',
+    unit_price      DECIMAL(10,2) NOT NULL COMMENT '单价',
+    subtotal        DECIMAL(10,2) NOT NULL COMMENT '小计',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_order (order_id),
+    INDEX idx_item (item_type, item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单明细表';
+
+-- ----------------------------
+-- 14. 支付记录表
+-- ----------------------------
+CREATE TABLE payments (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '支付记录ID',
+    payment_no      VARCHAR(50) NOT NULL UNIQUE COMMENT '支付流水号',
+    order_no        VARCHAR(50) NOT NULL COMMENT '关联订单号',
+    user_id         BIGINT NOT NULL COMMENT '用户ID',
+    amount          DECIMAL(10,2) NOT NULL COMMENT '支付金额',
+    pay_channel     VARCHAR(20) NOT NULL COMMENT '支付渠道(wechat/alipay/card)',
+    pay_status      TINYINT NOT NULL DEFAULT 0 COMMENT '0待支付 1支付成功 2支付失败 3已退款',
+    pay_time        DATETIME COMMENT '支付时间',
+    transaction_id  VARCHAR(100) COMMENT '第三方交易号',
+    extra_data      TEXT COMMENT '扩展数据(JSON)',
+    refund_amount    DECIMAL(10,2) DEFAULT 0 COMMENT '退款金额',
+    refund_time     DATETIME COMMENT '退款时间',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_order (order_no),
+    INDEX idx_user (user_id),
+    INDEX idx_pay_status (pay_status),
+    INDEX idx_pay_time (pay_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='支付记录表';
+
+-- ----------------------------
+-- 15. 点赞表
+-- ----------------------------
+CREATE TABLE likes (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '点赞ID',
+    user_id         BIGINT NOT NULL COMMENT '用户ID',
+    target_type     TINYINT NOT NULL COMMENT '1景点 2酒店 3游记',
+    target_id       BIGINT NOT NULL COMMENT '目标ID',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    UNIQUE KEY uk_user_target (user_id, target_type, target_id),
+    INDEX idx_target (target_type, target_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='点赞表';
+
+-- ----------------------------
+-- 16. 消息通知表
+-- ----------------------------
+CREATE TABLE notifications (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '通知ID',
+    user_id         BIGINT NOT NULL COMMENT '接收用户ID',
+    type            VARCHAR(30) NOT NULL COMMENT '通知类型(order_pay/order_cancel/refund/article_comment/article_like/system)',
+    title           VARCHAR(200) NOT NULL COMMENT '通知标题',
+    content         TEXT COMMENT '通知内容',
+    related_id      BIGINT COMMENT '关联ID(订单/游记等)',
+    is_read         TINYINT DEFAULT 0 COMMENT '是否已读 0未读 1已读',
+    read_time       DATETIME COMMENT '阅读时间',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_user (user_id),
+    INDEX idx_type (type),
+    INDEX idx_read (user_id, is_read),
+    INDEX idx_create (created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息通知表';
+
+-- ----------------------------
+-- 17. 系统通知表
+-- ----------------------------
+CREATE TABLE system_notifications (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '系统通知ID',
+    title           VARCHAR(200) NOT NULL COMMENT '通知标题',
+    content         TEXT NOT NULL COMMENT '通知内容',
+    type            VARCHAR(30) DEFAULT 'system' COMMENT '通知类型',
+    target_users    VARCHAR(50) DEFAULT 'all' COMMENT '推送目标(all/users/admins)',
+    cover_image     VARCHAR(500) COMMENT '封面图',
+    link_url        VARCHAR(500) COMMENT '跳转链接',
+    is_published    TINYINT DEFAULT 0 COMMENT '是否发布 0草稿 1已发布',
+    published_at    DATETIME COMMENT '发布时间',
+    start_time      DATETIME COMMENT '展示开始时间',
+    end_time        DATETIME COMMENT '展示结束时间',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_published (is_published),
+    INDEX idx_time (start_time, end_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统通知表';
+
+-- ----------------------------
+-- 18. 文件表
+-- ----------------------------
+CREATE TABLE files (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '文件ID',
+    file_name       VARCHAR(255) NOT NULL COMMENT '原始文件名',
+    file_path       VARCHAR(500) NOT NULL COMMENT '存储路径',
+    file_url        VARCHAR(500) NOT NULL COMMENT '访问URL',
+    file_size       BIGINT COMMENT '文件大小(字节)',
+    file_type       VARCHAR(50) COMMENT '文件MIME类型',
+    file_ext        VARCHAR(20) COMMENT '文件扩展名',
+    storage_type    VARCHAR(20) DEFAULT 'local' COMMENT '存储类型(local/oss/minio)',
+    user_id         BIGINT COMMENT '上传用户ID',
+    bucket_name     VARCHAR(100) COMMENT 'OSS Bucket',
+    biz_type        VARCHAR(50) COMMENT '业务类型(avatar/article/spot/hotel)',
+    biz_id          BIGINT COMMENT '关联业务ID',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_user (user_id),
+    INDEX idx_biz (biz_type, biz_id),
+    INDEX idx_create (created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件表';
+
+-- ----------------------------
+-- 19. 优惠券表
+-- ----------------------------
+CREATE TABLE coupons (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '优惠券ID',
+    name            VARCHAR(100) NOT NULL COMMENT '优惠券名称',
+    description     VARCHAR(500) COMMENT '使用说明',
+    type            TINYINT NOT NULL COMMENT '1满减券 2折扣券 3兑换券',
+    discount_value  DECIMAL(10,2) NOT NULL COMMENT '优惠值(满减金额或折扣率)',
+    min_amount      DECIMAL(10,2) DEFAULT 0 COMMENT '最低消费金额',
+    max_discount    DECIMAL(10,2) COMMENT '最高优惠金额(折扣券)',
+    total_count     INT NOT NULL COMMENT '发放总数量',
+    remain_count    INT NOT NULL COMMENT '剩余数量',
+    per_user_limit  INT DEFAULT 1 COMMENT '每人限领数量',
+    applicable_type TINYINT DEFAULT 1 COMMENT '适用类型 1全场 2景点 3酒店',
+    applicable_ids  VARCHAR(500) COMMENT '适用的景点/酒店ID列表',
+    valid_start     DATETIME NOT NULL COMMENT '有效期开始',
+    valid_end       DATETIME NOT NULL COMMENT '有效期结束',
+    status          TINYINT DEFAULT 1 COMMENT '1有效 0无效',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_status (status),
+    INDEX idx_valid (valid_start, valid_end)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券表';
+
+-- ----------------------------
+-- 20. 用户优惠券表
+-- ----------------------------
+CREATE TABLE user_coupons (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户优惠券ID',
+    user_id         BIGINT NOT NULL COMMENT '用户ID',
+    coupon_id       BIGINT NOT NULL COMMENT '优惠券ID',
+    coupon_name     VARCHAR(100) COMMENT '优惠券名称快照',
+    coupon_type     TINYINT COMMENT '优惠券类型快照',
+    discount_value  DECIMAL(10,2) COMMENT '优惠值快照',
+    min_amount      DECIMAL(10,2) COMMENT '最低消费快照',
+    max_discount    DECIMAL(10,2) COMMENT '最高优惠快照',
+    order_no        VARCHAR(50) COMMENT '关联订单号',
+    status          TINYINT DEFAULT 0 COMMENT '0未使用 1已使用 2已过期',
+    receive_time    DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '领取时间',
+    use_time        DATETIME COMMENT '使用时间',
+    expire_time     DATETIME COMMENT '过期时间',
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    UNIQUE KEY uk_user_coupon (user_id, coupon_id),
+    INDEX idx_user (user_id),
+    INDEX idx_status (status),
+    INDEX idx_expire (expire_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户优惠券表';
+
+-- ----------------------------
+-- 21. 操作日志表
+-- ----------------------------
+CREATE TABLE operation_logs (
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '日志ID',
+    user_id         BIGINT COMMENT '操作用户ID',
+    username        VARCHAR(50) COMMENT '操作用户名',
+    module          VARCHAR(50) NOT NULL COMMENT '模块',
+    action          VARCHAR(50) NOT NULL COMMENT '操作类型',
+    description     VARCHAR(500) COMMENT '操作描述',
+    request_method  VARCHAR(10) COMMENT '请求方法',
+    request_url     VARCHAR(500) COMMENT '请求URL',
+    request_params  TEXT COMMENT '请求参数',
+    response_data   TEXT COMMENT '响应数据',
+    ip_address      VARCHAR(50) COMMENT 'IP地址',
+    user_agent      VARCHAR(500) COMMENT '浏览器标识',
+    status          TINYINT DEFAULT 1 COMMENT '1成功 0失败',
+    error_message   VARCHAR(500) COMMENT '错误信息',
+    duration_ms     BIGINT COMMENT '耗时(毫秒)',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_user (user_id),
+    INDEX idx_module (module),
+    INDEX idx_create (created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志表';
+
+-- =============================================
 -- 初始化测试数据
 -- =============================================
 
@@ -249,3 +523,50 @@ INSERT INTO orders (order_no, user_id, order_type, target_id, target_name, total
 ('ORD202604010001', 1, 1, 1, '故宫博物院', 120.00, 120.00, 2, '2026-04-01 10:30:00', '测试用户', '13800138000', 2, '2026-04-15'),
 ('ORD202604010002', 1, 1, 2, '杭州西湖', 0.00, 0.00, 2, '2026-04-01 14:22:00', '测试用户', '13800138000', 1, '2026-04-20'),
 ('ORD202604020001', 1, 2, 1, '北京华尔道夫酒店', 3776.00, 3776.00, 2, '2026-04-02 09:15:00', '测试用户', '13800138000', 2, '2026-04-15');
+
+-- 插入景点门票数据
+INSERT INTO spot_tickets (spot_id, name, description, price, stock, valid_days, refundable, status, sort_order) VALUES
+(1, '成人票', '成人普通门票', 60.00, -1, 1, 1, 1, 1),
+(1, '学生票', '在校学生凭有效证件', 30.00, -1, 1, 1, 1, 2),
+(1, '老人票', '60周岁以上老人', 30.00, -1, 1, 1, 1, 3),
+(2, '船票', '西湖游船票', 55.00, -1, 1, 1, 1, 1),
+(3, '成人票', '黄山景区大门票', 230.00, -1, 1, 1, 1, 1),
+(4, '上岛船票', '往返鼓浪屿船票', 35.00, -1, 1, 1, 1, 1);
+
+-- 插入景点开放时间
+INSERT INTO spot_schedules (spot_id, day_of_week, start_time, end_time, is_closed, description) VALUES
+(1, 1, '08:30', '17:00', 0, '周一开放'),
+(1, 2, '08:30', '17:00', 0, '周二开放'),
+(1, 3, '08:30', '17:00', 0, '周三开放'),
+(1, 4, '08:30', '17:00', 0, '周四开放'),
+(1, 5, '08:30', '17:00', 0, '周五开放'),
+(1, 6, '08:30', '17:00', 0, '周六开放'),
+(1, 7, '08:30', '17:00', 0, '周日开放'),
+(2, NULL, '00:00', '23:59', 0, '全天开放');
+
+-- 插入房间库存数据
+INSERT INTO room_inventory (room_type_id, inventory_date, available_rooms, price) VALUES
+(1, '2026-04-15', 10, 1888.00),
+(1, '2026-04-16', 8, 1888.00),
+(1, '2026-04-17', 12, 1788.00),
+(2, '2026-04-15', 5, 2288.00),
+(2, '2026-04-16', 6, 2288.00),
+(8, '2026-04-15', 10, 1288.00),
+(8, '2026-04-16', 8, 1388.00);
+
+-- 插入优惠券数据
+INSERT INTO coupons (name, description, type, discount_value, min_amount, max_discount, total_count, remain_count, per_user_limit, applicable_type, valid_start, valid_end, status) VALUES
+('新人专享券', '新用户首单满100减20', 1, 20.00, 100.00, NULL, 1000, 850, 1, 1, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 1),
+('景点专属券', '景点门票满50减10', 1, 10.00, 50.00, NULL, 500, 400, 2, 2, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 1),
+('酒店折扣券', '酒店预订8折优惠', 2, 0.80, 200.00, 200.00, 300, 250, 1, 3, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 1),
+('满200减30', '全场通用满减券', 1, 30.00, 200.00, NULL, 1000, 900, 1, 1, '2026-04-01 00:00:00', '2026-06-30 23:59:59', 1);
+
+-- 插入用户优惠券
+INSERT INTO user_coupons (user_id, coupon_id, coupon_name, coupon_type, discount_value, min_amount, status, expire_time) VALUES
+(1, 1, '新人专享券', 1, 20.00, 100.00, 0, '2026-12-31 23:59:59'),
+(1, 2, '景点专属券', 1, 10.00, 50.00, 0, '2026-12-31 23:59:59');
+
+-- 插入系统通知
+INSERT INTO system_notifications (title, content, type, target_users, is_published, published_at) VALUES
+('欢迎使用智慧旅游管理系统', '感谢您的注册，祝您旅途愉快！', 'system', 'all', 1, NOW()),
+('五一假期优惠活动', '五一假期期间，所有景点门票8折优惠，快来抢购吧！', 'activity', 'all', 1, NOW());

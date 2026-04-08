@@ -192,3 +192,126 @@ export function deleteUser(id: number) {
 export function updateMenuPermissions(id: number, permissions: string) {
   return request.put(`/user/admin/${id}/menu-permissions`, { permissions })
 }
+
+// ==================== 支付管理 ====================
+export interface PaymentVO {
+  id: number
+  paymentNo: string
+  orderNo: string
+  userId: number
+  userName?: string
+  userAvatar?: string
+  orderType?: number
+  targetName?: string
+  amount: number
+  payChannel?: string
+  payStatus: number
+  payTime?: string
+  transactionId?: string
+  refundAmount?: number
+  refundTime?: string
+  createdAt: string
+}
+
+export interface PaymentStats {
+  totalIncome: number
+  refundAmount: number
+  successCount: number
+  refundCount: number
+}
+
+export function getPaymentList(params: {
+  page: number
+  pageSize: number
+  status?: number
+  orderType?: number
+  keyword?: string
+  startDate?: string
+  endDate?: string
+}) {
+  return request.get<{ records: PaymentVO[]; total: number; stats: PaymentStats }>('/admin/payment/list', { params })
+}
+
+export function getPaymentDetail(id: number) {
+  return request.get<PaymentVO>(`/admin/payment/${id}`)
+}
+
+export function refundPayment(id: number, reason?: string) {
+  return request.post(`/admin/payment/${id}/refund`, { reason })
+}
+
+// ==================== 通知管理 ====================
+export interface NotificationDTO {
+  id?: number
+  title: string
+  content: string
+  type: number
+  targetType: number
+  status: number
+}
+
+export function getNotificationList(params: {
+  page: number
+  pageSize: number
+  type?: number
+}) {
+  return request.get('/notification/list', { params })
+}
+
+export function createNotification(data: NotificationDTO) {
+  return request.post('/notification', data)
+}
+
+export function updateNotification(id: number, data: NotificationDTO) {
+  return request.put(`/notification/${id}`, data)
+}
+
+export function deleteNotification(id: number) {
+  return request.delete(`/notification/${id}`)
+}
+
+export function sendNotification(id: number) {
+  return request.put(`/notification/${id}/send`)
+}
+
+// ==================== 优惠券管理 ====================
+export interface CouponDTO {
+  id?: number
+  name: string
+  type: number
+  value: number
+  minAmount: number
+  totalCount: number
+  startTime: string
+  endTime: string
+  description: string
+  status: number
+}
+
+export function getCouponList(params: {
+  page: number
+  pageSize: number
+  status?: number
+}) {
+  return request.get('/coupon/list', { params })
+}
+
+export function createCoupon(data: CouponDTO) {
+  return request.post('/coupon', data)
+}
+
+export function updateCoupon(id: number, data: CouponDTO) {
+  return request.put(`/coupon/${id}`, data)
+}
+
+export function deleteCoupon(id: number) {
+  return request.delete(`/coupon/${id}`)
+}
+
+export function grantCoupon(id: number, userIds: number[]) {
+  return request.post(`/coupon/${id}/grant`, { userIds })
+}
+
+export function updateCouponStatus(id: number, status: number) {
+  return request.put(`/coupon/${id}/status`, { status })
+}

@@ -17,16 +17,26 @@ export interface Order {
   quantity: number
   visitDate?: string
   createdAt: string
+  couponId?: number
+  couponName?: string
+  discountAmount?: number
+}
+
+export interface PageResult<T> {
+  records: T[]
+  total: number
+  size: number
+  current: number
 }
 
 // 我的订单
 export function getMyOrdersApi(params: { page: number; pageSize: number; status?: number }) {
-  return request.get('/order/list', { params })
+  return request.get('/order/list', { params }) as Promise<{ code: number; msg: string; data: PageResult<Order> }>
 }
 
 // 订单详情
 export function getOrderDetailApi(id: number) {
-  return request.get(`/order/${id}`)
+  return request.get(`/order/${id}`) as Promise<{ code: number; msg: string; data: Order }>
 }
 
 // 创建景点订单
@@ -38,8 +48,11 @@ export function createSpotOrderApi(data: {
   visitDate?: string
   contactName?: string
   contactPhone?: string
+  couponId?: number
+  couponName?: string
+  discountAmount?: number
 }) {
-  return request.post('/order/create/spot', data)
+  return request.post('/order/create/spot', data) as Promise<{ code: number; msg: string; data: { orderNo: string } }>
 }
 
 // 创建酒店订单
@@ -49,16 +62,19 @@ export function createHotelOrderApi(data: {
   totalAmount: number
   contactName?: string
   contactPhone?: string
+  couponId?: number
+  couponName?: string
+  discountAmount?: number
 }) {
-  return request.post('/order/create/hotel', data)
+  return request.post('/order/create/hotel', data) as Promise<{ code: number; msg: string; data: { orderNo: string } }>
 }
 
 // 模拟支付
 export function payOrderApi(orderNo: string, payChannel = 'wechat') {
-  return request.post(`/order/${orderNo}/pay`, null, { params: { payChannel } })
+  return request.post(`/order/${orderNo}/pay`, null, { params: { payChannel } }) as Promise<{ code: number; msg: string }>
 }
 
 // 取消订单
 export function cancelOrderApi(id: number) {
-  return request.put(`/order/${id}/cancel`)
+  return request.put(`/order/${id}/cancel`) as Promise<{ code: number; msg: string }>
 }

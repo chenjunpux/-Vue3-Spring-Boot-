@@ -33,13 +33,24 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/public/**").permitAll()
                 .requestMatchers("/api/v1/ai/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
                 // 公开数据接口（浏览无需登录）
                 .requestMatchers(HttpMethod.GET, "/api/v1/spot/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/hotel/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/article/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/order/my").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/statistics/**").permitAll()
+                // 搜索接口公开
+                .requestMatchers(HttpMethod.GET, "/api/v1/search/**").permitAll()
+                // 公开数据接口
+                .requestMatchers(HttpMethod.GET, "/api/v1/spot-ticket/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/room-inventory/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/coupon/available").permitAll()
+                // 文件上传需要认证（头像等）
+                .requestMatchers(HttpMethod.POST, "/api/v1/file/**").authenticated()
+                // 管理端接口
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

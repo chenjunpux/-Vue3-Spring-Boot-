@@ -3,6 +3,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import router from '@/router'
 import { useUserStore } from '@stores/user'
 
+// ==================== 统一响应类型 ====================
+export interface ApiResponse<T = any> {
+  code: number
+  msg: string
+  data: T
+  timestamp?: number
+}
+
 // ==================== 创建 Axios 实例 ====================
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
@@ -39,13 +47,13 @@ service.interceptors.request.use(
 
 // ==================== 响应拦截器 ====================
 service.interceptors.response.use(
-  (response: AxiosResponse) => {
+  (response: AxiosResponse<ApiResponse>) => {
     const res = response.data
 
     // 根据后端统一响应格式判断
     if (res.code !== undefined) {
       if (res.code === 200) {
-        return res
+        return res as ApiResponse
       }
 
       // 业务错误
@@ -54,7 +62,7 @@ service.interceptors.response.use(
     }
 
     // 非标准格式直接返回
-    return res
+    return res as ApiResponse
   },
 
   async (error: AxiosError<{ code: number; msg: string }>) => {

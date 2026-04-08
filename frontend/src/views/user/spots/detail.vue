@@ -92,7 +92,7 @@
           <span class="price-unit">/人</span>
         </div>
         <div class="cta-btns">
-          <button class="btn-book" @click="$router.push('/orders')">立即预订</button>
+          <button class="btn-book" @click="$router.push(`/book/spot/${currentSpot.id || $route.params.id}`)">立即预订</button>
           <button class="btn-back" @click="$router.back()">返回列表</button>
         </div>
       </div>
@@ -147,6 +147,7 @@ const currentSpot = computed(() => {
     if (s.tips) practicalInfo.push({ title: '游览贴士', icon: '💡', value: s.tips })
 
     return {
+      id: s.id,
       name: s.name,
       level: s.level || '景点',
       city: s.city,
@@ -156,7 +157,7 @@ const currentSpot = computed(() => {
       hotScore: s.hotScore || 0,
       openTime: s.open_time || '',
       tags: s.tags ? s.tags.split(',') : [],
-      ticketPrice: Number(s.ticket_price) || 0,
+      ticketPrice: Number(s.ticketPrice) || 0,
       description: s.description || '',
       introStats: [],
       sections,

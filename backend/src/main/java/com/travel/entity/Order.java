@@ -39,7 +39,12 @@ public class Order {
     private Integer quantity;
     
     private LocalDate visitDate;
-    
+
+    // 优惠券相关
+    private Long couponId;
+    private String couponName;
+    private BigDecimal discountAmount;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
     

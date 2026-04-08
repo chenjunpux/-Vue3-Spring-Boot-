@@ -20,11 +20,43 @@ spring:
       port: 6379
       password:
       database: 0
+      # Redis 连接池配置
+      lettuce:
+        pool:
+          max-active: 8        # 最大连接数
+          max-idle: 8          # 最大空闲连接
+          min-idle: 2          # 最小空闲连接
+          max-wait: -1ms       # 最大等待时间
 
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 20MB
+
+  # RabbitMQ 配置
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    # 消费者配置
+    listener:
+      simple:
+        acknowledge-mode: manual      # 手动确认
+        prefetch: 10                  # 预取数量
+        retry:
+          enabled: true
+          initial-interval: 1000      # 初始间隔
+          max-attempts: 3             # 最大重试次数
+          max-interval: 10000         # 最大间隔
+          multiplier: 2.0              # 间隔倍数
+
+  # Spring Cache 配置
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=10m
 
 mybatis-plus:
   configuration:
@@ -39,13 +71,74 @@ mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.travel.entity
 
-# JWT配置
+# ==================== JWT配置 ====================
 jwt:
   secret: travel-system-secret-key-2026-very-long-and-secure-key-for-jwt-signing
   access-token-expiration: 86400000   # 24小时
   refresh-token-expiration: 604800000 # 7天
 
-# 统一响应
+# ==================== 统一响应 ====================
 result:
   success-code: 200
   error-code: 500
+
+# ==================== 文件上传配置 ====================
+file:
+  upload-dir: uploads
+  base-url: http://localhost:8080/uploads
+
+# ==================== MinIO 对象存储配置 ====================
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-name: travel-system
+  # 文件大小限制
+  max-file-size: 100MB
+
+# ==================== Spring Retry 配置 ====================
+spring.retry:
+  enabled: true
+  # 全局重试次数
+  max-attempts: 3
+  # 全局重试间隔
+  initial-interval: 1000
+  # 最大重试间隔
+  max-interval: 3000
+  # 间隔倍数
+  multiplier: 2.0
+
+# ==================== Knife4j / Swagger 配置 ====================
+knife4j:
+  enable: true
+  documents:
+    - group: 全部接口
+      name: 智慧旅游管理系统
+      locations: classpath:apidoc/*
+  setting:
+    language: zh_CN
+  openapi:
+    title: 智慧旅游管理系统 API
+    description: 适合冲优秀毕业设计 | Vue3 + Spring Boot 3
+    version: 1.0.0
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: '1.0'
+      packages-to-scan: com.travel.controller
+
+# ==================== 日志配置 ====================
+logging:
+  level:
+    root: INFO
+    com.travel: DEBUG
+    org.springframework.amqp: INFO
+    io.minio: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"

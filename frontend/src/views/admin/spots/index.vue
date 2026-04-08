@@ -1,176 +1,172 @@
 <template>
-  <div class="admin-spots">
-    <div class="page-header">
-      <h2 class="page-title">🗺️ 景点管理</h2>
-      <el-button type="primary" @click="openDialog('create')">+ 添加景点</el-button>
-    </div>
-
-    <!-- 搜索栏 -->
-    <div class="admin-filter-card">
-      <el-form :inline="true" :model="filterForm">
-        <el-form-item label="城市">
-          <el-input v-model="filterForm.city" placeholder="城市名称" clearable />
-        </el-form-item>
-        <el-form-item label="关键词">
-          <el-input v-model="filterForm.keyword" placeholder="景点名称" clearable />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="filterForm.status" placeholder="全部" clearable style="width: 120px">
+  <div class="admin-page admin-spots">
+    <!-- 数据卡片 -->
+    <div class="data-card">
+      <!-- 操作栏 -->
+      <div class="admin-header">
+        <div class="admin-header-left">
+          <el-input v-model="keyword" placeholder="搜索景点名称" clearable class="admin-search" @clear="handleSearch"
+            @keyup.enter="handleSearch">
+            <template #prefix>
+              <i class="i-mdi-magnify"></i>
+            </template>
+          </el-input>
+          <el-select v-model="cityFilter" placeholder="城市筛选" clearable class="admin-search" @change="fetchList">
+            <el-option label="北京" value="北京" />
+            <el-option label="上海" value="上海" />
+            <el-option label="广州" value="广州" />
+            <el-option label="深圳" value="深圳" />
+            <el-option label="杭州" value="杭州" />
+            <el-option label="成都" value="成都" />
+            <el-option label="西安" value="西安" />
+          </el-select>
+          <el-select v-model="statusFilter" placeholder="状态筛选" clearable class="admin-search" @change="fetchList">
             <el-option label="上架" :value="1" />
             <el-option label="下架" :value="0" />
           </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
+        </div>
+        <div class="header-right">
+          <el-button type="primary" @click="openForm()">
+            <i class="i-mdi-plus mr-1"></i> 新增景点
+          </el-button>
+        </div>
+      </div>
 
-    <!-- 表格 -->
-    <div class="admin-content-card admin-table">
-      <el-table :data="tableData" v-loading="loading">
+      <!-- 数据表格 -->
+      <el-table :data="tableData" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column label="封面" width="100">
           <template #default="{ row }">
-            <el-image v-if="row.coverImage" :src="row.coverImage" fit="cover" style="width:60px;height:40px;border-radius:4px;" />
-            <span v-else>-</span>
+            <el-image v-if="row.coverImage" :src="row.coverImage" fit="cover" class="admin-cover"
+              :preview-src-list="[row.coverImage]" />
+            <span v-else class="text-gray-400">暂无</span>
           </template>
         </el-table-column>
-        <el-table-column prop="name" label="景点名称" min-width="150" />
-        <el-table-column prop="city" label="城市" width="100" />
-        <el-table-column prop="level" label="等级" width="80">
-          <template #default="{ row }">{{ row.level || '-' }}</template>
+        <el-table-column prop="name" label="景点名称" min-width="150">
+          <template #default="{ row }">
+            <div class="font-medium">{{ row.name }}</div>
+            <div class="text-sm text-gray-500">{{ row.city }}</div>
+          </template>
         </el-table-column>
-        <el-table-column prop="ticketPrice" label="门票价" width="100">
-          <template #default="{ row }">¥{{ row.ticketPrice }}</template>
+        <el-table-column prop="ticketPrice" label="门票价格" width="100">
+          <template #default="{ row }">
+            <span class="text-green-600 font-medium">¥{{ row.ticketPrice }}</span>
+          </template>
         </el-table-column>
-        <el-table-column prop="hotScore" label="热度" width="80" />
-        <el-table-column prop="viewCount" label="浏览" width="80" />
+        <el-table-column prop="level" label="星级" width="100">
+          <template #default="{ row }">
+            <el-rate v-model="row.level" disabled text-color="#ff9900" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="openTime" label="开放时间" width="120" />
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
+            <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
               {{ row.status === 1 ? '上架' : '下架' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openDialog('edit', row)">编辑</el-button>
-            <el-button size="small" type="danger" plain @click="toggleStatus(row)">
+            <el-button type="primary" text size="small" @click="openForm(row)">
+              编辑
+            </el-button>
+            <el-button :type="row.status === 1 ? 'warning' : 'success'" text size="small" @click="toggleStatus(row)">
               {{ row.status === 1 ? '下架' : '上架' }}
             </el-button>
-            <el-popconfirm title="确认删除该景点？" @confirm="handleDelete(row.id)">
-              <template #reference>
-                <el-button size="small" type="danger">删除</el-button>
-              </template>
-            </el-popconfirm>
+            <el-button type="danger" text size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-wrap">
-        <el-pagination
-          background
-          layout="total, prev, pager, next"
-          :total="total"
-          :current-page="filterForm.page"
-          :page-size="filterForm.pageSize"
-          @current-change="handlePageChange"
-        />
+      <div class="admin-pagination">
+        <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
+          :total="pagination.total" :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next"
+          @size-change="fetchList" @current-change="fetchList" />
       </div>
     </div>
 
-    <!-- 添加/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="680px" destroy-on-close>
-      <el-form :model="form" :rules="formRules" ref="formRef" label-width="100px">
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog v-model="formVisible" :title="isEdit ? '编辑景点' : '新增景点'" width="700px" :close-on-click-modal="false">
+      <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px">
         <el-form-item label="景点名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入景点名称" />
+          <el-input v-model="formData.name" placeholder="请输入景点名称" />
         </el-form-item>
-        <el-form-item label="封面图URL" prop="coverImage">
-          <el-input v-model="form.coverImage" placeholder="图片URL" />
+        <el-form-item label="封面图片" prop="coverImage">
+          <el-input v-model="formData.coverImage" placeholder="请输入封面图片URL" />
         </el-form-item>
-        <el-row :gutter="16">
+        <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="城市" prop="city">
-              <el-input v-model="form.city" placeholder="如：北京" />
+            <el-form-item label="所在城市" prop="city">
+              <el-input v-model="formData.city" placeholder="请输入城市" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="景区等级" prop="level">
-              <el-select v-model="form.level" placeholder="请选择" style="width: 100%">
-                <el-option label="5A" value="5A" />
-                <el-option label="4A" value="4A" />
-                <el-option label="3A" value="3A" />
-                <el-option label="其他" value="" />
-              </el-select>
+            <el-form-item label="详细地址" prop="address">
+              <el-input v-model="formData.address" placeholder="请输入地址" />
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="详细地址" prop="address">
-          <el-input v-model="form.address" placeholder="详细地址" />
-        </el-form-item>
-        <el-row :gutter="16">
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="门票价格" prop="ticketPrice">
-              <el-input-number v-model="form.ticketPrice" :min="0" :precision="2" style="width: 100%" />
+              <el-input-number v-model="formData.ticketPrice" :min="0" :precision="2" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="建议时长" prop="suggestedTime">
-              <el-input-number v-model="form.suggestedTime" :min="1" :max="72" style="width: 100%">
-                <template #append>小时</template>
-              </el-input-number>
+            <el-form-item label="建议游览" prop="suggestedTime">
+              <el-input-number v-model="formData.suggestedTime" :min="1" :max="24" />
+              <span class="ml-2">小时</span>
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="开放时间" prop="openTime">
-          <el-input v-model="form.openTime" placeholder="如：08:00-18:00" />
-        </el-form-item>
-        <el-form-item label="标签" prop="tags">
-          <el-input v-model="form.tags" placeholder="多个标签用逗号分隔，如：历史,文化,博物馆" />
+          <el-input v-model="formData.openTime" placeholder="如：08:00-18:00" />
         </el-form-item>
         <el-form-item label="景点描述" prop="description">
-          <el-input v-model="form.description" type="textarea" :rows="4" placeholder="景点描述..." />
+          <el-input v-model="formData.description" type="textarea" :rows="4" placeholder="请输入景点描述" />
         </el-form-item>
-        <el-form-item label="经度" prop="longitude">
-          <el-input-number v-model="form.longitude" :precision="6" :min="-180" :max="180" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="纬度" prop="latitude">
-          <el-input-number v-model="form.latitude" :precision="6" :min="-90" :max="90" style="width: 100%" />
+        <el-form-item label="标签" prop="tags">
+          <el-input v-model="formData.tags" placeholder="多个标签用逗号分隔" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确认</el-button>
+        <el-button @click="formVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getAdminSpotList, createSpot, updateSpot, deleteSpot, updateSpotStatus, type SpotDTO } from '@/api/admin'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getAdminSpotList, createSpot, updateSpot, deleteSpot, updateSpotStatus } from '@/api/admin'
+import type { SpotDTO } from '@/api/admin'
+import type { FormInstance, FormRules } from 'element-plus'
 
 const loading = ref(false)
-const submitLoading = ref(false)
-const dialogVisible = ref(false)
-const formRef = ref()
+const keyword = ref('')
+const cityFilter = ref('')
+const statusFilter = ref<number | ''>('')
 const tableData = ref<any[]>([])
-const total = ref(0)
-const dialogMode = ref<'create' | 'edit'>('create')
-
-const filterForm = reactive({
+const pagination = reactive({
   page: 1,
   pageSize: 10,
-  city: '',
-  keyword: '',
-  status: undefined as number | undefined,
+  total: 0
 })
 
-const defaultForm = (): SpotDTO => ({
+// 表单相关
+const formVisible = ref(false)
+const isEdit = ref(false)
+const submitting = ref(false)
+const formRef = ref<FormInstance>()
+const formData = reactive<SpotDTO>({
   name: '',
   coverImage: '',
   city: '',
@@ -180,146 +176,170 @@ const defaultForm = (): SpotDTO => ({
   description: '',
   ticketPrice: 0,
   openTime: '',
-  suggestedTime: 4,
+  suggestedTime: 1,
   level: '',
   tags: '',
-  status: 1,
+  status: 1
 })
 
-const form = reactive<SpotDTO>(defaultForm())
-
-const dialogTitle = computed(() => dialogMode.value === 'create' ? '添加景点' : '编辑景点')
-
-const formRules = {
+const rules: FormRules = {
   name: [{ required: true, message: '请输入景点名称', trigger: 'blur' }],
   city: [{ required: true, message: '请输入城市', trigger: 'blur' }],
+  ticketPrice: [{ required: true, message: '请输入门票价格', trigger: 'blur' }],
 }
 
-async function fetchData() {
+// 获取列表
+async function fetchList() {
   try {
     loading.value = true
-    const res: any = await getAdminSpotList(filterForm)
-    const data = res.data || res
-    tableData.value = data.records || []
-    total.value = data.total || 0
+    const res: any = await getAdminSpotList({
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      keyword: keyword.value || undefined,
+      city: cityFilter.value || undefined,
+      status: statusFilter.value || undefined
+    })
+    tableData.value = res.data?.records || res.records || []
+    pagination.total = res.data?.total || res.total || 0
   } catch (e) {
-    console.error(e)
+    console.error('获取列表失败', e)
+    ElMessage.error('获取列表失败')
   } finally {
     loading.value = false
   }
 }
 
 function handleSearch() {
-  filterForm.page = 1
-  fetchData()
+  pagination.page = 1
+  fetchList()
 }
 
-function handleReset() {
-  filterForm.city = ''
-  filterForm.keyword = ''
-  filterForm.status = undefined
-  filterForm.page = 1
-  fetchData()
-}
-
-function handlePageChange(page: number) {
-  filterForm.page = page
-  fetchData()
-}
-
-function openDialog(mode: 'create' | 'edit', row?: any) {
-  dialogMode.value = mode
-  if (mode === 'edit' && row) {
-    Object.assign(form, {
-      id: row.id,
-      name: row.name,
-      coverImage: row.coverImage || '',
-      city: row.city,
-      address: row.address || '',
-      longitude: row.longitude || 0,
-      latitude: row.latitude || 0,
-      description: row.description || '',
-      ticketPrice: row.ticketPrice || 0,
-      openTime: row.openTime || '',
-      suggestedTime: row.suggestedTime || 4,
-      level: row.level || '',
-      tags: row.tags || '',
-      status: row.status,
-    })
+// 打开表单
+function openForm(row?: any) {
+  if (row) {
+    isEdit.value = true
+    Object.assign(formData, row)
   } else {
-    Object.assign(form, defaultForm())
+    isEdit.value = false
+    Object.assign(formData, {
+      name: '',
+      coverImage: '',
+      city: '',
+      address: '',
+      longitude: 0,
+      latitude: 0,
+      description: '',
+      ticketPrice: 0,
+      openTime: '',
+      suggestedTime: 1,
+      level: '',
+      tags: '',
+      status: 1
+    })
   }
-  dialogVisible.value = true
+  formVisible.value = true
 }
 
+// 提交表单
 async function handleSubmit() {
+  if (!formRef.value) return
+
   try {
     await formRef.value.validate()
-    submitLoading.value = true
-    if (dialogMode.value === 'create') {
-      await createSpot(form)
-      ElMessage.success('添加成功')
-    } else {
-      await updateSpot(form.id!, form)
+    submitting.value = true
+
+    if (isEdit.value) {
+      await updateSpot(formData.id!, formData)
       ElMessage.success('更新成功')
+    } else {
+      await createSpot(formData)
+      ElMessage.success('创建成功')
     }
-    dialogVisible.value = false
-    fetchData()
+
+    formVisible.value = false
+    fetchList()
   } catch (e: any) {
-    if (e !== false) ElMessage.error(e?.message || '操作失败')
+    if (e?.message) {
+      ElMessage.error(e.message)
+    }
   } finally {
-    submitLoading.value = false
+    submitting.value = false
   }
 }
 
+// 切换状态
 async function toggleStatus(row: any) {
   const newStatus = row.status === 1 ? 0 : 1
+  const action = newStatus === 1 ? '上架' : '下架'
+
   try {
+    await ElMessageBox.confirm(`确定要${action}该景点吗？`, '提示', { type: 'warning' })
     await updateSpotStatus(row.id, newStatus)
-    ElMessage.success(newStatus === 1 ? '已上架' : '已下架')
-    fetchData()
-  } catch (e) {
-    ElMessage.error('操作失败')
+    ElMessage.success(`${action}成功`)
+    fetchList()
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error('操作失败')
+    }
   }
 }
 
-async function handleDelete(id: number) {
+// 删除
+async function handleDelete(row: any) {
   try {
-    await deleteSpot(id)
+    await ElMessageBox.confirm('确定要删除该景点吗？此操作不可恢复。', '警告', {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    })
+    await deleteSpot(row.id)
     ElMessage.success('删除成功')
-    fetchData()
-  } catch (e) {
-    ElMessage.error('删除失败')
+    fetchList()
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
   }
 }
 
-fetchData()
+onMounted(() => {
+  fetchList()
+})
 </script>
 
 <style scoped lang="scss">
 .admin-spots {
-  .page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-
-    .page-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0;
-    }
-  }
-
-  .filter-card {
-    margin-bottom: 16px;
-  }
-
-  .pagination-wrap {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 16px;
-  }
+  max-width: 1400px;
+  margin: 0 auto;
 }
+
+/* 数据卡片 */
+.data-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.dark .data-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+/* 卡片头部 */
+.card-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dark .card-header {
+  border-color: #374151;
+}
+
+
 </style>

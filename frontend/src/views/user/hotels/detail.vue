@@ -319,8 +319,8 @@ function disabledCheckOutDate(date: Date) {
 
 function handleBook() {
   if (!canBook.value) return
-  ElMessage.success(`已提交预订：${currentHotel.value.name} - ${selectedRoom.value.name}，共${nightCount.value}晚`)
-  router.push('/orders')
+  // 跳转到预订确认页面
+  router.push(`/book/hotel/${currentHotel.value.id}`)
 }
 
 // ─── GSAP 动画 ───────────────────────────────────────────────────────────────

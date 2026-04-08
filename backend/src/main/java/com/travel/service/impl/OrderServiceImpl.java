@@ -4,9 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travel.entity.Order;
+import com.travel.entity.UserCoupon;
 import com.travel.mapper.OrderMapper;
+import com.travel.mapper.UserCouponMapper;
 import com.travel.service.OrderService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,9 +18,11 @@ import java.util.UUID;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderMapper orderMapper;
+    private final UserCouponMapper userCouponMapper;
 
-    public OrderServiceImpl(OrderMapper orderMapper) {
+    public OrderServiceImpl(OrderMapper orderMapper, UserCouponMapper userCouponMapper) {
         this.orderMapper = orderMapper;
+        this.userCouponMapper = userCouponMapper;
     }
 
     @Override
@@ -52,6 +57,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public void payOrder(String orderNo, String payChannel) {
         Order order = getOrderByNo(orderNo);
         if (order != null && order.getStatus() == 1) {
@@ -60,6 +66,21 @@ public class OrderServiceImpl implements OrderService {
             order.setPayChannel(payChannel);
             order.setUpdatedAt(LocalDateTime.now());
             orderMapper.updateById(order);
+
+            // 如果使用了优惠券，标记优惠券为已使用
+            if (order.getCouponId() != null) {
+                LambdaQueryWrapper<UserCoupon> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(UserCoupon::getUserId, order.getUserId())
+                       .eq(UserCoupon::getCouponId, order.getCouponId())
+                       .eq(UserCoupon::getStatus, 0); // 未使用
+                UserCoupon userCoupon = userCouponMapper.selectOne(wrapper);
+                if (userCoupon != null) {
+                    userCoupon.setStatus(1); // 已使用
+                    userCoupon.setOrderNo(orderNo);
+                    userCoupon.setUseTime(LocalDateTime.now());
+                    userCouponMapper.updateById(userCoupon);
+                }
+            }
         }
     }
 

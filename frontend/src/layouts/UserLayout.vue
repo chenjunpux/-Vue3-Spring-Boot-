@@ -32,6 +32,12 @@
                   <el-dropdown-item @click="$router.push('/orders')">
                     <span i="ep-tickets" /> 我的订单
                   </el-dropdown-item>
+                  <el-dropdown-item @click="$router.push('/coupons')">
+                    <span i="ep-ticket" /> 优惠券
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="$router.push('/notifications')">
+                    <span i="ep-bell" /> 消息通知
+                  </el-dropdown-item>
                   <el-dropdown-item divided @click="handleLogout">
                     <span i="ep-switch-button" /> 退出登录
                   </el-dropdown-item>
@@ -82,6 +88,7 @@ const navList = [
   { path: '/hotels', name: '酒店', icon: '🏨' },
   { path: '/travel', name: '智慧旅行', icon: '✨' },
   { path: '/articles', name: '游记', icon: '📝' },
+  { path: '/coupons', name: '优惠券', icon: '🎫' },
 ]
 
 async function handleLogout() {
