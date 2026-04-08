@@ -1,133 +1,231 @@
-# 🧳 智慧旅游管理系统 - 前端项目
+# 🧳 智慧旅游管理系统
 
-> Vue3 + TypeScript + Vite + UnoCSS + GSAP + Element Plus
+> Vue3 + Spring Boot 3 + Docker 全栈项目
 
 ---
 
-## 🚀 快速开始
+## 🚀 一键 Docker 部署（Mac / Linux / Windows 通用）
 
-### 1. 安装依赖
+### 前置条件
 
-```bash
-cd travel-system/frontend
-npm install
-```
+- 安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/)（Windows 推荐 WSL2 后端）
+- Docker 版本 >= 20.10，docker compose 版本 >= 2.0
 
-### 2. 配置环境变量
+### 1. 克隆项目
 
 ```bash
-cp .env.example .env.local
-# 填写高德地图 Key（可选）
+git clone https://github.com/chenjunpux/-Vue3-Spring-Boot-.git
+cd -Vue3-Spring-Boot-/travel-system
 ```
 
-### 3. 启动开发服务器
+### 2. 一键启动（所有服务）
 
 ```bash
-npm run dev
+cd docker
+docker compose up -d
 ```
 
-访问 http://localhost:5173
+> 首次启动会自动构建后端镜像（需要几分钟下载依赖），后续启动直接运行即可。
+
+### 3. 等待服务就绪
+
+```bash
+docker compose ps
+```
+
+确认所有容器状态为 `healthy` 后即可访问。
+
+### 4. 访问系统
+
+| 服务 | 地址 |
+|------|------|
+| 🌐 旅游管理系统前台 | http://localhost |
+| 🔧 后端 API | http://localhost:8080 |
+| 📬 RabbitMQ 管理界面 | http://localhost:15672（guest/guest） |
+| 🗄️ MinIO 控制台 | http://localhost:9001（minioadmin/minioadmin123456） |
+| 🐬 phpMyAdmin（数据库） | http://localhost:8081 |
+| 📋 Swagger API 文档 | http://localhost:8080/swagger-ui.html |
+
+### 5. 测试账号
+
+| 账号 | 密码 | 角色 |
+|------|------|------|
+| `admin` | `admin123` | 管理员 |
+| `testuser` | `user123` | 普通用户 |
 
 ---
 
 ## 📁 项目结构
 
 ```
-frontend/
-├── src/
-│   ├── api/            # Axios 封装 + 所有接口
-│   ├── assets/         # 静态资源
-│   ├── components/     # 公共组件
-│   ├── composables/     # Composition API 复用
-│   ├── layouts/        # 布局组件（用户端 + 管理端）
-│   ├── router/        # 路由配置 + 守卫
-│   ├── stores/        # Pinia 状态管理
-│   ├── styles/        # 全局样式
-│   ├── types/          # TypeScript 类型定义
-│   ├── utils/          # 工具函数
-│   └── views/          # 页面
-│       ├── auth/       # 登录/注册
-│       ├── user/       # 用户端页面
-│       ├── admin/      # 管理端页面
-│       └── error/      # 错误页
-├── public/             # 静态资源
-├── package.json
-├── vite.config.ts
-├── uno.config.ts
-└── tsconfig.json
+travel-system/
+├── docker/                 # Docker 部署配置
+│   ├── docker-compose.yml   # 容器编排（MySQL/Redis/RabbitMQ/MinIO/Nginx/后端）
+│   ├── Dockerfile-backend   # 后端构建镜像
+│   ├── nginx/conf.d/        # Nginx 反向代理配置
+│   ├── mysql/conf.d/        # MySQL 配置
+│   ├── redis/redis.conf     # Redis 配置
+│   ├── init.sql             # 数据库初始化
+│   └── rabbitmq/enabled_plugins  # RabbitMQ 插件配置
+├── backend/                # Spring Boot 3 后端
+│   └── src/main/resources/
+│       ├── application.yml  # 主配置（dev + prod profile）
+│       └── schema.sql       # 数据库建表脚本
+├── frontend/               # Vue3 + TypeScript 前端
+│   ├── src/api/            # 所有接口定义
+│   ├── src/views/           # 页面组件
+│   └── dist/               # 打包后的静态文件（由 Nginx 托管）
+└── deploy/                  # 部署脚本
 ```
 
 ---
 
-## 🛠️ 技术栈
+## 🛠️ Docker 服务说明
 
-| 分类 | 技术 | 说明 |
-|------|------|------|
-| 框架 | Vue 3 + Composition API | `<script setup>` 写法 |
-| 语言 | TypeScript (strict) | 严格类型检查 |
-| 构建 | Vite 5 | 极速 HMR |
-| 样式 | UnoCSS + TailwindCSS | 原子化 CSS |
-| UI | Element Plus | 管理端组件库 |
-| 状态 | Pinia | 现代化状态管理 |
-| 路由 | Vue Router 4 | SPA 路由 |
-| HTTP | Axios | 请求拦截 + 统一错误处理 |
-| 动画 | GSAP + ScrollTrigger | 高级滚动动画 |
-| 可视化 | ECharts 5 | 数据大屏图表 |
-| 地图 | 高德地图 JS API | 景点定位/路线规划 |
+| 容器名 | 镜像 | 说明 |
+|--------|------|------|
+| `travel-mysql` | mysql:8.0 | MySQL 8 数据库 |
+| `travel-redis` | redis:7-alpine | Redis 缓存 |
+| `travel-rabbitmq` | rabbitmq:3.12-management | 消息队列 |
+| `travel-minio` | minio/minio | 对象存储（文件/图片） |
+| `travel-backend` | docker-backend | Spring Boot 后端 |
+| `travel-nginx` | nginx:alpine | 前端静态资源 + API 反向代理 |
+| `travel-phpmyadmin` | phpmyadmin | 可选：数据库可视化（需 `docker compose --profile tools up -d`） |
 
 ---
 
-## 📝 开发规范
+## 🔧 常用 Docker 命令
 
-### 目录命名
-- 组件文件：`PascalCase.vue`
-- 工具/类型文件：`camelCase.ts`
-- API 文件：按模块拆分，如 `spot.ts`、`hotel.ts`
+```bash
+# 停止所有服务
+docker compose down
 
-### 代码风格
-- 使用 `<script setup lang="ts">` 语法
-- 所有组件 props 和 emits 需定义类型
-- API 请求统一走 `@/api/` 目录
-- 样式使用 UnoCSS 工具类 + scoped SCSS
+# 重启某个服务
+docker compose restart backend
 
-### Git 提交规范
+# 查看日志
+docker compose logs -f backend      # 后端日志
+docker compose logs -f nginx        # Nginx 日志
+docker compose logs -f mysql        # 数据库日志
 
-```
-feat: 新功能
-fix: 修复bug
-docs: 文档修改
-style: 代码格式
-refactor: 重构
-perf: 性能优化
-test: 测试相关
-chore: 构建/工具
+# 重新构建并启动
+docker compose up -d --build
+
+# 进入容器内部
+docker compose exec backend sh
+
+# 查看资源占用
+docker stats
 ```
 
 ---
 
-## 🌟 创意页面
+## ⚠️ Windows 特别注意事项
 
-| 页面 | 技术亮点 |
-|------|---------|
-| 首页 Hero | GSAP 视差 + Typed.js 打字机效果 |
-| 景点列表 | 瀑布流 + GSAP 滚动入场动画 |
-| 景点详情 | 高德地图 + 聚合标记点 |
-| 数据大屏 | ECharts 实时图表 |
-| 管理后台 | Element Plus 完整 CRUD |
+### 1. 确保 WSL2 已安装（推荐）
+
+Docker Desktop for Windows 需要 WSL2 作为后端：
+
+```powershell
+# 管理员 PowerShell 运行
+wsl --install
+```
+
+然后在 Docker Desktop 设置 → General →勾选 "Use the WSL2 based engine"
+
+### 2. 项目放哪个盘都可以，但推荐非 C 盘
+
+WSL2 访问宿主机文件系统性能较差，项目放 `D:\Projects\` 比 `C:\` 更快。
+
+### 3. 克隆项目
+
+```powershell
+git clone https://github.com/chenjunpux/-Vue3-Spring-Boot-.git
+cd -Vue3-Spring-Boot-/travel-system
+cd docker
+docker compose up -d
+```
+
+### 4. 如果遇到端口占用
+
+确保以下端口未被占用：
+
+```powershell
+netstat -ano | findstr "80 3307 6379 5672 9000 9001 8080 8081"
+```
+
+如果端口被占用，修改 `docker-compose.yml` 中的端口映射。
+
+### 5. Docker Desktop 内存设置
+
+建议给 Docker 分配 4GB+ 内存，避免 MySQL/Elasticsearch 等服务内存不足：
+
+Docker Desktop → Settings → Resources → Memory: 4GB+
 
 ---
 
-## 📋 待完成页面
+## 📝 环境变量说明
 
-- [ ] 景点详情页（高德地图 + VR 全景）
-- [ ] 酒店详情页（720°室内图）
-- [ ] 游记发布页（Markdown 编辑器）
-- [ ] 个人中心 + 足迹地图
-- [ ] WebSocket 实时客服
-- [ ] Lottie 空状态动画
+后端连接配置通过 `docker-compose.yml` 中的环境变量注入：
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `SPRING_DATASOURCE_URL` | MySQL 连接地址 | `jdbc:mysql://mysql:3306/travel_system` |
+| `SPRING_DATASOURCE_PASSWORD` | MySQL root 密码 | `root_password_2026` |
+| `SPRING_DATA_REDIS_HOST` | Redis 地址 | `redis` |
+| `MINIO_ENDPOINT` | MinIO API 地址 | `http://minio:9000` |
+| `MINIO_ACCESS_KEY` | MinIO 用户名 | `minioadmin` |
+| `MINIO_SECRET_KEY` | MinIO 密码 | `minioadmin123456` |
 
 ---
 
-## 许可证
+## 🔄 数据持久化
+
+所有数据（MySQL、Redis、RabbitMQ、MinIO）均通过 Docker Volume 持久化，删除容器不会丢失数据。重新 `docker compose up -d` 会自动恢复数据。
+
+如需**重置所有数据**，执行：
+
+```bash
+docker compose down -v   # -v 会删除所有数据卷
+docker compose up -d
+```
+
+---
+
+## 📖 开发模式（非 Docker）
+
+### 前端开发
+
+```bash
+cd frontend
+npm install
+npm run dev        # 访问 http://localhost:5173
+# 需同时启动后端：cd backend && mvn spring-boot:run
+```
+
+### 后端开发
+
+```bash
+cd backend
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+# 连接 localhost:3306 的本地 MySQL
+```
+
+---
+
+## 技术栈
+
+| 端 | 技术 |
+|----|------|
+| 前端 | Vue 3 + TypeScript + Vite + UnoCSS + Element Plus + ECharts |
+| 后端 | Spring Boot 3 + MyBatis-Plus + JWT + Redis |
+| 数据库 | MySQL 8 |
+| 缓存 | Redis 7 |
+| 消息队列 | RabbitMQ 3.12 |
+| 对象存储 | MinIO |
+| 反向代理 | Nginx |
+| DevOps | Docker + Docker Compose |
+
+---
 
 MIT License - 仅供毕设学习使用

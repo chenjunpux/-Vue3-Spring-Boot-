@@ -1,0 +1,56 @@
+# ==================== Java ====================
+backend/target/
+backend/.mvn/wrapper/
+backend/*.class
+backend/*.jar
+backend/!*.jar
+backend/.classpath
+backend/.project
+backend/.settings/
+*.log
+*.tmp
+
+# ==================== Node / Frontend ====================
+frontend/node_modules/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/dist/
+frontend/.DS_Store
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.cache/
+frontend/.parcel-cache/
+
+# ==================== IDE ====================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+
+# ==================== OS ====================
+.DS_Store
+Thumbs.db
+.DS_Store
+*/.DS_Store
+
+# ==================== Docker ====================
+docker/mysql-data/
+docker/redis-data/
+docker/rabbitmq-data/
+docker/minio-data/
+docker/ssl/
+docker/logs/
+docker/nginx/conf.d/*.conf
+
+# ==================== Misc ====================
+*.mdbk
+*.backup
+*.bak
+uploads/
+*.local

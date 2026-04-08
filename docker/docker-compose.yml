@@ -32,7 +32,7 @@ services:
       # MySQL
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/travel_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
       - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=travel_password_2026
+      - SPRING_DATASOURCE_PASSWORD=root_password_2026
       # Redis
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
@@ -70,7 +70,7 @@ services:
     image: mysql:8.0
     container_name: travel-mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root_password_2026
       MYSQL_DATABASE: travel_system
