@@ -1,0 +1,47 @@
+{
+  "name": "travel-system-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx --fix",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@amap/amap-jsapi-loader": "^1.0.1",
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.6.8",
+    "clsx": "^2.1.0",
+    "dayjs": "^1.11.10",
+    "echarts": "^5.5.0",
+    "echarts-for-vue": "^1.4.1",
+    "element-plus": "^2.5.6",
+    "gsap": "^3.12.5",
+    "lottie-web": "^5.12.2",
+    "nprogress": "^0.2.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@iconify-json/ep": "^1.2.4",
+    "@iconify-json/mdi": "^1.2.3",
+    "@tsconfig/node20": "^20.1.2",
+    "@types/node": "^20.11.0",
+    "@types/nprogress": "^0.2.3",
+    "@unocss/reset": "^0.58.5",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vitejs/plugin-vue-jsx": "^3.1.0",
+    "@vue/tsconfig": "^0.5.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.22.0",
+    "sass-embedded": "^1.98.0",
+    "typescript": "^5.4.0",
+    "unocss": "^0.58.5",
+    "vite": "^5.2.0",
+    "vue-tsc": "^2.0.6"
+  }
+}
