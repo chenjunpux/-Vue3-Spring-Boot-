@@ -62,7 +62,8 @@
           v-model:page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next"
+          :page-count="pageCount"
+          layout="total, sizes, prev, pager, next, jumper"
           @size-change="fetchList"
           @current-change="fetchList"
         />
@@ -93,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAdminUserList, updateUserStatus } from '@/api/admin'
 import dayjs from 'dayjs'
@@ -103,6 +104,7 @@ const keyword = ref('')
 const statusFilter = ref<number | ''>('')
 const tableData = ref<any[]>([])
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
+const pageCount = computed(() => Math.ceil(pagination.total / pagination.pageSize) || 1)
 
 const detailVisible = ref(false)
 const currentUser = ref<any>(null)

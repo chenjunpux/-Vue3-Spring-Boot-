@@ -155,15 +155,28 @@
       </div>
     </div>
 
+    <!-- ── 位置地图 ── -->
+    <div class="hotel-map-section" ref="hotelMapSectionRef">
+      <div class="map-inner">
+        <div class="map-label">位置导航</div>
+        <h2>酒店位置</h2>
+        <p class="map-address">📍 {{ currentHotel.address }}</p>
+        <div class="map-container">
+          <div :id="hotelMapId" class="amap-wrapper"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useAmap } from '@/composables/useAmap'
 import { getHotelDetailApi, getHotelRoomsApi } from '@/api/hotel'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -275,9 +288,11 @@ const currentHotel = computed(() => {
         popular: false,
       })),
       reviews: [],
+      longitude: h.longitude ? Number(h.longitude) : 116.397428,
+      latitude: h.latitude ? Number(h.latitude) : 39.90923,
     }
   }
-  return { name: '', city: '', address: '', score: '0', commentCount: 0, tags: [], images: [], facilities: [], description: '', rooms: [], reviews: [] }
+  return { name: '', city: '', address: '', score: '0', commentCount: 0, tags: [], images: [], facilities: [], description: '', rooms: [], reviews: [], longitude: 116.397428, latitude: 39.90923 }
 })
 
 // ─── 预订 ───────────────────────────────────────────────────────────────────
@@ -333,6 +348,8 @@ const introDescRef = ref<HTMLElement | null>(null)
 const galleryRef = ref<HTMLElement | null>(null)
 const reviewsSectionRef = ref<HTMLElement | null>(null)
 const reviewsListRef = ref<HTMLElement | null>(null)
+const hotelMapId = 'hotel-amap'
+const hotelMapSectionRef = ref<HTMLElement | null>(null)
 
 function initGsapAnimations() {
   // 轮播淡入
@@ -400,6 +417,16 @@ onMounted(() => {
   genDanmaku()
   startDanmaku()
   initGsapAnimations()
+  // 初始化高德地图
+  nextTick(() => {
+    const { initMap } = useAmap(hotelMapId, {
+      longitude: currentHotel.value.longitude,
+      latitude: currentHotel.value.latitude,
+      zoom: 15,
+      title: currentHotel.value.name,
+    })
+    setTimeout(initMap, 300)
+  })
 })
 
 onUnmounted(() => {
@@ -881,6 +908,53 @@ onUnmounted(() => {
 
       img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
     }
+  }
+}
+
+/* ── 位置地图 ── */
+.hotel-map-section {
+  background: #f8fafc;
+  padding: 80px 24px;
+
+  .map-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .map-label {
+    font-size: 13px;
+    color: #f97316;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 900;
+    color: #1e293b;
+    margin-bottom: 12px;
+  }
+
+  .map-address {
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 32px;
+  }
+
+  .map-container {
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+    border: 1px solid #f1f5f9;
+  }
+
+  .amap-wrapper {
+    width: 100%;
+    height: 400px;
+    background: #e8f4f8;
   }
 }
 </style>

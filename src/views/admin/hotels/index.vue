@@ -72,7 +72,8 @@
       <!-- 分页 -->
       <div class="admin-pagination">
         <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-          :total="pagination.total" :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next"
+          :total="pagination.total" :page-sizes="[10, 20, 50, 100]" :page-count="pageCount"
+          layout="total, sizes, prev, pager, next, jumper"
           @size-change="fetchList" @current-change="fetchList" />
       </div>
     </div>
@@ -171,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getAdminHotelList, createHotel, updateHotel, deleteHotel, updateHotelStatus,
@@ -185,6 +186,7 @@ const keyword = ref('')
 const statusFilter = ref<number | ''>('')
 const tableData = ref<any[]>([])
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
+const pageCount = computed(() => Math.ceil(pagination.total / pagination.pageSize) || 1)
 
 // 酒店表单
 const formVisible = ref(false)
