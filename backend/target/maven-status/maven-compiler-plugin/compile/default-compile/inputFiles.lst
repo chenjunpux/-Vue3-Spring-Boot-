@@ -12,6 +12,7 @@
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/config/SwaggerConfig.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/config/WebMvcConfig.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/controller/AIController.java
+/Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/controller/AdminNotificationController.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/controller/AdminPaymentController.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/controller/ArticleAdminController.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/controller/ArticleController.java
@@ -76,6 +77,7 @@
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/mapper/UserAddressMapper.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/mapper/UserCouponMapper.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/mapper/UserMapper.java
+/Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/mq/NotificationMessageConsumer.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/mq/NotificationMessageProducer.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/mq/OrderMessageConsumer.java
 /Users/feizhaishiyou/Documents/New project/travel-system/backend/src/main/java/com/travel/mq/OrderMessageProducer.java

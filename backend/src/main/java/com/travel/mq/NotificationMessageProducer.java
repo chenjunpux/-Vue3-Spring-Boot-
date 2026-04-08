@@ -60,16 +60,66 @@ public class NotificationMessageProducer {
     }
 
     /**
+     * 发送系统通知给全部用户（批量）
+     */
+    public void sendNotificationAll(Long notificationId, String title, String content, Integer type) {
+        log.info("发送系统通知给全部用户: notificationId={}, title={}", notificationId, title);
+        NotificationMessage msg = new NotificationMessage();
+        msg.setUserId(-1L); // -1 表示全部用户
+        msg.setType(String.valueOf(type));
+        msg.setTitle(title);
+        msg.setContent(content);
+        msg.setLinkUrl("/notifications");
+        msg.setNotificationId(notificationId);
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.NOTIFICATION_EXCHANGE,
+                "notification.create",
+                msg
+        );
+    }
+
+    /**
+     * 发送系统通知给指定用户
+     */
+    public void sendNotificationBatch(Long notificationId, String title, String content, Integer type, String userIdsJson) {
+        log.info("发送系统通知给指定用户: notificationId={}, title={}", notificationId, title);
+        NotificationMessage msg = new NotificationMessage();
+        msg.setUserId(-2L); // -2 表示指定用户
+        msg.setType(String.valueOf(type));
+        msg.setTitle(title);
+        msg.setContent(content);
+        msg.setLinkUrl("/notifications");
+        msg.setNotificationId(notificationId);
+        msg.setUserIdsJson(userIdsJson);
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.NOTIFICATION_EXCHANGE,
+                "notification.create",
+                msg
+        );
+    }
+
+    /**
      * 通知消息实体
      */
     @lombok.Data
     @lombok.AllArgsConstructor
     @lombok.NoArgsConstructor
     public static class NotificationMessage {
-        private Long userId;           // 接收用户ID，null表示全体用户
+        private Long userId;           // 接收用户ID，null表示全体用户，-1全部用户，-2指定用户
         private String type;           // 通知类型
         private String title;          // 通知标题
         private String content;        // 通知内容
         private String linkUrl;        // 跳转链接
+        private Long notificationId;    // 系统通知ID
+        private String userIdsJson;    // 指定用户ID列表JSON
+
+        // 兼容原有 5 参数构造器
+        public NotificationMessage(Long userId, String type, String title, String content, String linkUrl) {
+            this.userId = userId;
+            this.type = type;
+            this.title = title;
+            this.content = content;
+            this.linkUrl = linkUrl;
+        }
     }
 }

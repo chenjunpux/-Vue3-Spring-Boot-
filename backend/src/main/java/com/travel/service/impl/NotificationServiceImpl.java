@@ -95,9 +95,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
         LocalDateTime now = LocalDateTime.now();
         return systemNotificationMapper.selectList(
             new LambdaQueryWrapper<SystemNotification>()
-                .eq(SystemNotification::getIsPublished, 1)
-                .le(SystemNotification::getStartTime, now)
-                .ge(SystemNotification::getEndTime, now)
+                .eq(SystemNotification::getStatus, 1)
                 .orderByDesc(SystemNotification::getPublishedAt)
         );
     }

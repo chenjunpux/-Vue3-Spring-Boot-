@@ -72,9 +72,9 @@
           </button>
 
           <!-- 通知 -->
-          <button class="action-btn notification-btn" @click="showNotifications">
+          <button class="action-btn notification-btn" @click="showNotifications = true">
             <i class="i-mdi-bell"></i>
-            <span v-if="notificationCount > 0" class="badge">{{ notificationCount }}</span>
+            <span v-if="unreadCount > 0" class="badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
           </button>
 
           <!-- 用户下拉 -->
@@ -102,6 +102,58 @@
           </el-dropdown>
         </div>
       </header>
+
+    <!-- 通知面板 -->
+    <el-drawer v-model="showNotifications" title="我的通知" direction="rtl" size="380px" :with-header="true">
+      <template #header>
+        <div class="notif-header">
+          <span class="notif-title">通知中心</span>
+          <el-button v-if="unreadCount > 0" type="primary" text size="small" @click="markAllRead">
+            全部已读
+          </el-button>
+        </div>
+      </template>
+      <div class="notif-body">
+        <!-- 加载中 -->
+        <div v-if="notifLoading" class="notif-loading">
+          <el-icon class="is-loading"><i class="i-mdi-loading"></i></el-icon>
+          <span>加载中...</span>
+        </div>
+        <!-- 空状态 -->
+        <div v-else-if="notifications.length === 0" class="notif-empty">
+          <i class="i-mdi-bell-outline"></i>
+          <p>暂无通知</p>
+        </div>
+        <!-- 通知列表 -->
+        <div v-else class="notif-list">
+          <div
+            v-for="item in notifications"
+            :key="item.id"
+            class="notif-item"
+            :class="{ unread: !item.isRead }"
+            @click="handleNotifClick(item)"
+          >
+            <div class="notif-icon-wrap">
+              <i :class="getNotifIcon(item.type)"></i>
+            </div>
+            <div class="notif-content">
+              <div class="notif-item-title">{{ item.title }}</div>
+              <div class="notif-item-content">{{ item.content }}</div>
+              <div class="notif-item-time">{{ formatTime(item.createdAt) }}</div>
+            </div>
+            <div v-if="!item.isRead" class="notif-dot"></div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="notif-footer">
+          <router-link to="/admin/notifications" class="notif-all-link" @click="showNotifications = false">
+            查看全部通知
+            <i class="i-mdi-chevron-right"></i>
+          </router-link>
+        </div>
+      </template>
+    </el-drawer>
 
       <!-- 标签页 -->
       <div class="tabs-bar">
@@ -161,10 +213,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import { notificationApi } from '@/api/notification'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+dayjs.extend(relativeTime)
 
 const router = useRouter()
 const route = useRoute()
@@ -176,7 +233,89 @@ const userInfo = computed(() => userStore.userInfo)
 // 状态
 const sidebarOpen = ref(false)
 const isDark = ref(false)
-const notificationCount = ref(3)
+
+// 通知相关
+const showNotifications = ref(false)
+const notifications = ref<any[]>([])
+const unreadCount = ref(0)
+const notifLoading = ref(false)
+
+// 获取未读数
+async function fetchUnreadCount() {
+  try {
+    const res = await notificationApi.unreadCount()
+    if (res.code === 200) {
+      unreadCount.value = res.data || 0
+    }
+  } catch {}
+}
+
+// 获取通知列表
+async function fetchNotifications() {
+  try {
+    notifLoading.value = true
+    const res = await notificationApi.list({ page: 1, pageSize: 20 })
+    if (res.code === 200) {
+      notifications.value = res.data?.list || []
+      unreadCount.value = res.data?.unreadCount || 0
+    }
+  } catch {
+    notifications.value = []
+  } finally {
+    notifLoading.value = false
+  }
+}
+
+// 标记全部已读
+async function markAllRead() {
+  try {
+    const res = await notificationApi.markAllAsRead()
+    if (res.code === 200) {
+      unreadCount.value = 0
+      notifications.value.forEach(n => { n.isRead = 1 })
+    }
+  } catch { ElMessage.error('操作失败') }
+}
+
+// 点击通知
+async function handleNotifClick(item: any) {
+  if (!item.isRead) {
+    try {
+      await notificationApi.markAsRead(item.id)
+      item.isRead = 1
+      unreadCount.value = Math.max(0, unreadCount.value - 1)
+    } catch {}
+  }
+  showNotifications.value = false
+  if (item.relatedId) {
+    router.push('/admin/orders')
+  }
+}
+
+// 格式化时间
+function formatTime(time: string) {
+  return dayjs(time).fromNow()
+}
+
+// 获取通知图标
+function getNotifIcon(type: string) {
+  const map: Record<string, string> = {
+    '1': 'i-mdi-bell',
+    'order': 'i-mdi-file-document-check',
+    'article': 'i-mdi-book-open-variant',
+    'system': 'i-mdi-cog',
+  }
+  return map[type] || 'i-mdi-bell'
+}
+
+// 定时刷新未读数
+let pollTimer: ReturnType<typeof setInterval> | null = null
+function startPoll() {
+  pollTimer = setInterval(() => {
+    if (showNotifications.value) return
+    fetchUnreadCount()
+  }, 30000)
+}
 
 // 标签页
 interface TabItem {
@@ -308,10 +447,10 @@ function toggleTheme() {
   document.documentElement.classList.toggle('dark', isDark.value)
 }
 
-// 显示通知
-function showNotifications() {
-  ElMessage.info('通知功能开发中...')
-}
+// 监听通知面板打开
+watch(showNotifications, (val) => {
+  if (val) fetchNotifications()
+})
 
 // 用户菜单命令
 async function handleCommand(command: string) {
@@ -347,6 +486,16 @@ onMounted(() => {
   if (route.path !== '/admin/dashboard') {
     addTab(route.path)
   }
+
+  // 获取未读通知数
+  fetchUnreadCount()
+  // 启动轮询
+  startPoll()
+})
+
+// 清理
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer)
 })
 
 // 路由变化时自动添加标签页
@@ -373,6 +522,127 @@ watch(() => route.path, () => {
   background: #111827;
   color: #f9fafb;
 }
+
+/* ========== 通知面板样式 ========== */
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.notif-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notif-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.notif-loading,
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+.notif-loading i { font-size: 24px; animation: spin 1s linear infinite; }
+.notif-empty i { font-size: 48px; margin-bottom: 8px; }
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+}
+.notif-item:hover { background: #f8fafc; }
+.notif-item.unread { background: #f0f7ff; }
+.notif-item.unread:hover { background: #e0efff; }
+
+.notif-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.notif-content { flex: 1; min-width: 0; }
+
+.notif-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notif-item-content {
+  font-size: 13px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+
+.notif-item-time {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.notif-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.notif-all-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #3b82f6;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.notif-all-link:hover { background: #f0f7ff; }
 
 /* 侧边栏 */
 .sidebar {

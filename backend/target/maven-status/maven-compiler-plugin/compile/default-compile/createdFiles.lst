@@ -35,6 +35,7 @@ com/travel/mq/NotificationMessageProducer.class
 com/travel/service/RoomInventoryService.class
 com/travel/config/SecurityConfig.class
 com/travel/dto/RegisterDTO.class
+com/travel/mq/NotificationMessageConsumer.class
 com/travel/entity/Comment.class
 com/travel/mapper/UserAddressMapper.class
 com/travel/service/impl/SpotTicketServiceImpl.class
@@ -97,6 +98,7 @@ com/travel/entity/Article.class
 com/travel/controller/ArticleController.class
 com/travel/controller/SpotTicketController.class
 com/travel/controller/PaymentController.class
+com/travel/controller/AdminNotificationController.class
 com/travel/entity/SystemNotification.class
 com/travel/entity/Coupon.class
 com/travel/mapper/SystemNotificationMapper.class
