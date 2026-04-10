@@ -18,38 +18,34 @@
         <div class="header-actions">
           <!-- 已登录 -->
           <template v-if="userStore.isLoggedIn">
-            <el-dropdown trigger="click">
-              <div class="user-avatar">
-                <el-avatar :size="36" :src="userStore.userInfo?.avatar">
-                  {{ userStore.nickname.slice(0, 1) }}
-                </el-avatar>
+            <div class="dropdown dropdown-end">
+              <div tabindex="0" role="button" class="avatar cursor-pointer">
+                <div class="w-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                  <img v-if="userStore.userInfo?.avatar" :src="userStore.userInfo.avatar" :alt="userStore.nickname" />
+                  <div v-else class="bg-primary text-primary-content w-full h-full flex items-center justify-center text-sm font-bold">
+                    {{ userStore.nickname?.slice(0, 1) || 'U' }}
+                  </div>
+                </div>
               </div>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="$router.push('/profile')">
-                    <span i="ep-user" /> 个人中心
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="$router.push('/orders')">
-                    <span i="ep-tickets" /> 我的订单
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="$router.push('/coupons')">
-                    <span i="ep-ticket" /> 优惠券
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="$router.push('/notifications')">
-                    <span i="ep-bell" /> 消息通知
-                  </el-dropdown-item>
-                  <el-dropdown-item divided @click="handleLogout">
-                    <span i="ep-switch-button" /> 退出登录
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+              <ul tabindex="0" class="dropdown-content z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-200">
+                <li class="menu-title px-4 py-2 text-xs text-neutral/50">
+                  {{ userStore.nickname || userStore.userInfo?.username }}
+                </li>
+                <li><a @click="$router.push('/profile')">个人中心</a></li>
+                <li><a @click="$router.push('/orders')">我的订单</a></li>
+                <li><a @click="$router.push('/coupons')">优惠券</a></li>
+                <li><a @click="$router.push('/notifications')">消息通知</a></li>
+                <li class="border-t border-base-200 mt-1 pt-1">
+                  <a class="text-error" @click="handleLogout">退出登录</a>
+                </li>
+              </ul>
+            </div>
           </template>
 
           <!-- 未登录 -->
           <template v-else>
-            <el-button text @click="$router.push('/login')">登录</el-button>
-            <el-button type="primary" @click="$router.push('/register')">注册</el-button>
+            <button class="btn btn-ghost btn-sm" @click="$router.push('/login')">登录</button>
+            <button class="btn btn-primary btn-sm" @click="$router.push('/register')">注册</button>
           </template>
         </div>
       </div>
@@ -77,7 +73,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -91,8 +87,8 @@ const navList = [
   { path: '/coupons', name: '优惠券', icon: '🎫' },
 ]
 
-async function handleLogout() {
-  await ElMessageBox.confirm('确定要退出登录吗？', '提示', { type: 'warning' })
+function handleLogout() {
+  if (!confirm('确定要退出登录吗？')) return
   userStore.logout()
   router.push('/home')
 }

@@ -23,7 +23,7 @@
         <div class="stat">
           <div class="stat-figure text-error"><i class="i-mdi-minus-circle text-3xl"></i></div>
           <div class="stat-title">退款笔数</div>
-          <div class="stat-value text-error">{{ stats.refundCount || 0 }}</div>
+          <div class="stat-value text-error">{{ stats.refundCount || 0 }}</div>. 
           <div class="stat-desc">已退款订单</div>
         </div>
       </div>
