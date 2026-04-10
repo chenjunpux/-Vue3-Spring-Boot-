@@ -1,366 +1,285 @@
 <template>
   <div class="admin-page">
+
     <!-- 统计卡片 -->
-    <div class="admin-stats">
-      <div class="admin-stat">
-        <div class="admin-stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
-          <i class="i-mdi-currency-cny"></i>
-        </div>
-        <div class="admin-stat-content">
-          <div class="admin-stat-value">¥{{ formatAmount(stats.totalIncome) }}</div>
-          <div class="admin-stat-label">总收入</div>
-        </div>
-      </div>
-      <div class="admin-stat">
-        <div class="admin-stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
-          <i class="i-mdi-check-circle"></i>
-        </div>
-        <div class="admin-stat-content">
-          <div class="admin-stat-value">{{ stats.successCount || 0 }}</div>
-          <div class="admin-stat-label">成功交易</div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <div class="stats shadow border border-base-300 w-full">
+        <div class="stat">
+          <div class="stat-figure text-primary"><i class="i-mdi-currency-cny text-3xl"></i></div>
+          <div class="stat-title">总收入</div>
+          <div class="stat-value text-primary">¥{{ formatAmount(stats.totalIncome) }}</div>
+          <div class="stat-desc">成功交易 {{ stats.successCount || 0 }} 笔</div>
         </div>
       </div>
-      <div class="admin-stat">
-        <div class="admin-stat-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
-          <i class="i-mdi-minus-circle"></i>
-        </div>
-        <div class="admin-stat-content">
-          <div class="admin-stat-value">{{ stats.refundCount || 0 }}</div>
-          <div class="admin-stat-label">退款笔数</div>
+      <div class="stats shadow border border-base-300 w-full">
+        <div class="stat">
+          <div class="stat-figure text-success"><i class="i-mdi-check-circle text-3xl"></i></div>
+          <div class="stat-title">成功交易</div>
+          <div class="stat-value text-success">{{ stats.successCount || 0 }}</div>
+          <div class="stat-desc">已支付订单</div>
         </div>
       </div>
-      <div class="admin-stat">
-        <div class="admin-stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
-          <i class="i-mdi-clock-outline"></i>
+      <div class="stats shadow border border-base-300 w-full">
+        <div class="stat">
+          <div class="stat-figure text-error"><i class="i-mdi-minus-circle text-3xl"></i></div>
+          <div class="stat-title">退款笔数</div>
+          <div class="stat-value text-error">{{ stats.refundCount || 0 }}</div>
+          <div class="stat-desc">已退款订单</div>
         </div>
-        <div class="admin-stat-content">
-          <div class="admin-stat-value">¥{{ formatAmount(stats.refundAmount) }}</div>
-          <div class="admin-stat-label">退款金额</div>
+      </div>
+      <div class="stats shadow border border-base-300 w-full">
+        <div class="stat">
+          <div class="stat-figure text-warning"><i class="i-mdi-clock-outline text-3xl"></i></div>
+          <div class="stat-title">退款金额</div>
+          <div class="stat-value text-warning">¥{{ formatAmount(stats.refundAmount) }}</div>
+          <div class="stat-desc">已退款总额</div>
         </div>
       </div>
     </div>
 
     <!-- 数据卡片 -->
-    <div class="admin-card">
+    <div class="bg-base-100 rounded-lg shadow border border-base-300 overflow-hidden">
+
       <!-- 操作栏 -->
-      <div class="admin-header">
-        <div class="admin-header-left">
-          <el-input v-model="keyword" placeholder="搜索用户/订单号" clearable class="admin-search" @clear="handleSearch" @keyup.enter="handleSearch">
-            <template #prefix><i class="i-mdi-magnify"></i></template>
-          </el-input>
-          <el-select v-model="typeFilter" placeholder="订单类型" clearable class="admin-search" @change="fetchList">
-            <el-option label="全部" :value="0" />
-            <el-option label="景点门票" :value="1" />
-            <el-option label="酒店预订" :value="2" />
-          </el-select>
-          <el-select v-model="statusFilter" placeholder="交易状态" clearable class="admin-search" @change="fetchList">
-            <el-option label="全部" :value="0" />
-            <el-option label="待支付" :value="1" />
-            <el-option label="已支付" :value="2" />
-            <el-option label="已退款" :value="3" />
-          </el-select>
-          <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" class="admin-search" @change="fetchList" />
+      <div class="flex items-center justify-between flex-wrap gap-3 p-4 border-b border-base-300">
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="join">
+            <input v-model="keyword" class="input input-bordered join-item w-52"
+              placeholder="搜索用户/订单号" @keyup.enter="handleSearch" />
+            <button class="btn join-item" @click="handleSearch"><MagnifyingGlassIcon class="w-4 h-4" /></button>
+          </div>
+          <select v-model="typeFilter" class="select select-bordered w-28" @change="page = 1; fetchList()">
+            <option :value="0">全部类型</option>
+            <option :value="1">景点门票</option>
+            <option :value="2">酒店预订</option>
+          </select>
+          <select v-model="statusFilter" class="select select-bordered w-28" @change="page = 1; fetchList()">
+            <option :value="0">全部状态</option>
+            <option :value="1">待支付</option>
+            <option :value="2">已支付</option>
+            <option :value="3">已退款</option>
+          </select>
+          <!-- 日期范围 -->
+          <input v-model="startDate" type="date" class="input input-bordered w-36" placeholder="开始日期"
+            @change="page = 1; fetchList()" />
+          <span class="opacity-50">至</span>
+          <input v-model="endDate" type="date" class="input input-bordered w-36" placeholder="结束日期"
+            @change="page = 1; fetchList()" />
         </div>
-        <div class="admin-header-right">
-          <el-button @click="refreshData">
-            <i class="i-mdi-refresh mr-1"></i> 刷新
-          </el-button>
-          <el-button type="primary" @click="exportData">
-            <i class="i-mdi-download mr-1"></i> 导出
-          </el-button>
+        <div class="flex gap-2">
+          <button class="btn btn-outline btn-sm" @click="refreshData">刷新</button>
+          <button class="btn btn-primary btn-sm" @click="exportData">导出</button>
         </div>
       </div>
 
-      <!-- 数据表格 -->
-      <div class="admin-table">
-        <el-table :data="tableData" v-loading="loading" stripe>
-          <el-table-column type="index" label="序号" width="70" align="center" />
-          <el-table-column prop="id" label="ID" width="80" align="center" />
-          <el-table-column prop="paymentNo" label="支付单号" width="200" show-overflow-tooltip />
-          <el-table-column prop="orderNo" label="关联订单" width="180" show-overflow-tooltip />
-          <el-table-column label="用户信息" width="200">
-            <template #default="{ row }">
-              <div class="flex items-center gap-2">
-                <el-avatar :size="32" :src="row.userAvatar">{{ (row.userName || 'U').slice(0, 1) }}</el-avatar>
-                <div>
-                  <div class="font-medium text-sm">{{ row.userName || '-' }}</div>
-                  <div class="text-xs text-gray-400">ID: {{ row.userId }}</div>
+      <!-- 加载 -->
+      <div v-if="loading" class="flex items-center justify-center p-8">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- 表格 -->
+      <div v-else class="overflow-x-auto">
+        <table class="table table-zebra w-full text-sm">
+          <thead>
+            <tr>
+              <th>ID</th><th>支付单号</th><th>关联订单</th><th>用户信息</th><th>类型</th>
+              <th>消费内容</th><th>金额</th><th>支付方式</th><th>状态</th><th>时间</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in tableData" :key="row.id">
+              <td class="font-mono">{{ row.id }}</td>
+              <td class="font-mono text-xs max-w-32 truncate">{{ row.paymentNo }}</td>
+              <td class="font-mono text-xs max-w-32 truncate">{{ row.orderNo }}</td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="avatar"><div class="w-8 rounded-full bg-primary text-primary-content text-xs">
+                      {{ (row.userName || 'U').slice(0, 1) }}
+                    </div></div>
+                  <div>
+                    <div class="text-sm font-medium">{{ row.userName || '-' }}</div>
+                    <div class="text-xs opacity-60">ID: {{ row.userId }}</div>
+                  </div>
                 </div>
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="orderType" label="订单类型" width="100">
-            <template #default="{ row }">
-              <el-tag :type="row.orderType === 1 ? 'primary' : 'warning'" size="small">
-                {{ row.orderType === 1 ? '景点门票' : '酒店预订' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="targetName" label="消费内容" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="amount" label="支付金额" width="120">
-            <template #default="{ row }">
-              <span class="text-green-600 font-bold">¥{{ formatAmount(row.amount) }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="payChannel" label="支付方式" width="100">
-            <template #default="{ row }">
-              <el-tag v-if="row.payChannel" size="small">{{ getPayChannelText(row.payChannel) }}</el-tag>
-              <span v-else class="text-gray-400">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="payStatus" label="状态" width="100">
-            <template #default="{ row }">
-              <el-tag :type="getStatusType(row.payStatus)" size="small">
-                {{ getStatusText(row.payStatus) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdAt" label="创建时间" width="160">
-            <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
-          </el-table-column>
-          <el-table-column label="操作" width="120" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" text size="small" @click="showDetail(row)">详情</el-button>
-              <el-button v-if="row.payStatus === 1" type="warning" text size="small" @click="handleRefund(row)">退款</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+              </td>
+              <td>
+                <span :class="row.orderType === 1 ? 'badge-primary' : 'badge-warning'" class="badge badge-sm">
+                  {{ row.orderType === 1 ? '景点' : '酒店' }}
+                </span>
+              </td>
+              <td class="max-w-xs truncate">{{ row.targetName || '-' }}</td>
+              <td class="text-green-600 font-bold">¥{{ formatAmount(row.amount) }}</td>
+              <td>
+                <span class="badge badge-outline badge-sm">{{ getPayChannelText(row.payChannel) }}</span>
+              </td>
+              <td>
+                <span :class="getStatusBadgeClass(row.payStatus)" class="badge badge-sm">
+                  {{ getStatusText(row.payStatus) }}
+                </span>
+              </td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+              <td>
+                <div class="flex gap-1 flex-wrap">
+                  <button class="btn btn-primary btn-xs" @click="showDetail(row)">详情</button>
+                  <button v-if="row.payStatus === 2" class="btn btn-warning btn-xs" @click="handleRefund(row)">退款</button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="tableData.length === 0">
+              <td colspan="11" class="text-center py-8 text-neutral/50">暂无数据</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- 分页 -->
-      <div class="admin-pagination">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :total="pagination.total"
-          :page-sizes="[10, 20, 50, 100]"
-          :page-count="pageCount"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchList"
-          @current-change="fetchList"
-        />
+      <div class="flex items-center justify-between p-4 border-t border-base-300 flex-wrap gap-2">
+        <span class="text-sm text-neutral/60">共 {{ total }} 条</span>
+        <div class="join">
+          <button class="join-item btn btn-sm" :disabled="page <= 1" @click="page--; fetchList()">«</button>
+          <button class="join-item btn btn-sm disabled">第 {{ page }} / {{ totalPages || 1 }} 页</button>
+          <button class="join-item btn btn-sm" :disabled="page >= (totalPages || 1)" @click="page++; fetchList()">»</button>
+        </div>
       </div>
     </div>
 
-    <!-- 支付详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="支付详情" width="600px">
-      <el-descriptions v-if="currentPayment" :column="2" border>
-        <el-descriptions-item label="支付单号" :span="2">{{ currentPayment.paymentNo }}</el-descriptions-item>
-        <el-descriptions-item label="订单号" :span="2">{{ currentPayment.orderNo }}</el-descriptions-item>
-        <el-descriptions-item label="用户ID">{{ currentPayment.userId }}</el-descriptions-item>
-        <el-descriptions-item label="用户昵称">{{ currentPayment.userName || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="订单类型">
-          <el-tag :type="currentPayment.orderType === 1 ? 'primary' : 'warning'" size="small">
-            {{ currentPayment.orderType === 1 ? '景点门票' : '酒店预订' }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="支付状态">
-          <el-tag :type="getStatusType(currentPayment.payStatus)">{{ getStatusText(currentPayment.payStatus) }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="消费内容" :span="2">{{ currentPayment.targetName || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="支付金额">
-          <span class="text-green-600 font-bold">¥{{ formatAmount(currentPayment.amount) }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="支付方式">{{ getPayChannelText(currentPayment.payChannel) || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ formatDate(currentPayment.createdAt) }}</el-descriptions-item>
-        <el-descriptions-item label="支付时间">{{ currentPayment.payTime ? formatDate(currentPayment.payTime) : '-' }}</el-descriptions-item>
-        <el-descriptions-item v-if="currentPayment.transactionId" label="交易流水号" :span="2">{{ currentPayment.transactionId }}</el-descriptions-item>
-        <el-descriptions-item v-if="currentPayment.refundTime" label="退款时间" :span="2">{{ formatDate(currentPayment.refundTime) }}</el-descriptions-item>
-      </el-descriptions>
-    </el-dialog>
+    <!-- 详情 Modal -->
+    <dialog id="payment_detail_modal" class="modal">
+      <div class="modal-box max-w-xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">支付详情</h3>
+        <div v-if="currentPayment" class="space-y-2 text-sm">
+          <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+            <div><span class="font-semibold">支付单号：</span><span class="font-mono text-xs">{{ currentPayment.paymentNo }}</span></div>
+            <div><span class="font-semibold">订单号：</span><span class="font-mono text-xs">{{ currentPayment.orderNo }}</span></div>
+            <div><span class="font-semibold">用户ID：</span>{{ currentPayment.userId }}</div>
+            <div><span class="font-semibold">用户昵称：</span>{{ currentPayment.userName || '-' }}</div>
+            <div>
+              <span class="font-semibold">订单类型：</span>
+              <span :class="currentPayment.orderType === 1 ? 'badge-primary' : 'badge-warning'" class="badge badge-sm">
+                {{ currentPayment.orderType === 1 ? '景点门票' : '酒店预订' }}
+              </span>
+            </div>
+            <div>
+              <span class="font-semibold">支付状态：</span>
+              <span :class="getStatusBadgeClass(currentPayment.payStatus)" class="badge badge-sm">
+                {{ getStatusText(currentPayment.payStatus) }}
+              </span>
+            </div>
+            <div class="col-span-2"><span class="font-semibold">消费内容：</span>{{ currentPayment.targetName || '-' }}</div>
+            <div class="text-green-600 font-bold text-base"><span class="font-semibold">支付金额：</span>¥{{ formatAmount(currentPayment.amount) }}</div>
+            <div><span class="font-semibold">支付方式：</span>{{ getPayChannelText(currentPayment.payChannel) }}</div>
+            <div><span class="font-semibold">创建时间：</span>{{ formatDate(currentPayment.createdAt) }}</div>
+            <div><span class="font-semibold">支付时间：</span>{{ currentPayment.payTime ? formatDate(currentPayment.payTime) : '-' }}</div>
+            <div v-if="currentPayment.transactionId" class="col-span-2"><span class="font-semibold">交易流水号：</span><span class="font-mono text-xs">{{ currentPayment.transactionId }}</span></div>
+            <div v-if="currentPayment.refundTime" class="col-span-2"><span class="font-semibold">退款时间：</span>{{ formatDate(currentPayment.refundTime) }}</div>
+          </div>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPaymentList, refundPayment, type PaymentVO, type PaymentStats } from '@/api/admin'
 import dayjs from 'dayjs'
+import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 
 const loading = ref(false)
 const keyword = ref('')
-const typeFilter = ref<number>(0)
-const statusFilter = ref<number>(0)
-const dateRange = ref<string[]>([])
+const typeFilter = ref(0)
+const statusFilter = ref(0)
+const startDate = ref('')
+const endDate = ref('')
 const tableData = ref<PaymentVO[]>([])
-const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
-const pageCount = computed(() => Math.ceil(pagination.total / pagination.pageSize) || 1)
-const stats = reactive<PaymentStats>({
-  totalIncome: 0,
-  refundAmount: 0,
-  successCount: 0,
-  refundCount: 0
-})
+const page = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = computed(() => Math.ceil(total.value / pageSize.value) || 1)
+const stats = reactive<PaymentStats>({ totalIncome: 0, refundAmount: 0, successCount: 0, refundCount: 0 })
 
-const detailVisible = ref(false)
 const currentPayment = ref<PaymentVO | null>(null)
 
-// 格式化金额（分转元）
-function formatAmount(amount: number) {
-  if (!amount) return '0.00'
-  return (amount).toFixed(2)
-}
+function formatAmount(amount: number) { return amount ? amount.toFixed(2) : '0.00' }
 
-// 支付方式映射
-function getPayChannelText(channel: string) {
-  const map: Record<string, string> = {
-    wechat: '微信支付',
-    alipay: '支付宝',
-    bank: '银行卡',
-    balance: '余额',
-  }
+function getPayChannelText(channel: any) {
+  const map: Record<string, string> = { wechat: '微信', alipay: '支付宝', bank: '银行卡', balance: '余额' }
   return map[channel?.toLowerCase()] || channel || '-'
 }
 
-// 状态映射
-function getStatusType(status: number) {
-  const map: Record<number, string> = {
-    0: 'info',      // 待支付
-    1: 'success',   // 已支付
-    2: 'warning',   // 已取消
-    3: 'danger',    // 已退款
-  }
-  return map[status] || 'info'
+const statusMap: Record<number, { text: string; cls: string }> = {
+  0: { text: '待支付', cls: 'badge-warning' },
+  1: { text: '已支付', cls: 'badge-success' },
+  2: { text: '已取消', cls: 'badge-neutral' },
+  3: { text: '已退款', cls: 'badge-error' },
 }
-
-function getStatusText(status: number) {
-  const map: Record<number, string> = {
-    0: '待支付',
-    1: '已支付',
-    2: '已取消',
-    3: '已退款',
-  }
-  return map[status] || '未知'
-}
-
-function formatDate(dateStr: string) {
-  return dateStr ? dayjs(dateStr).format('YYYY-MM-DD HH:mm:ss') : '-'
-}
+function getStatusBadgeClass(s: number) { return statusMap[s]?.cls || 'badge-neutral' }
+function getStatusText(s: number) { return statusMap[s]?.text || '未知' }
+function formatDate(d: string) { return d ? dayjs(d).format('YYYY-MM-DD HH:mm') : '-' }
 
 async function fetchList() {
   try {
     loading.value = true
     const res: any = await getPaymentList({
-      page: pagination.page,
-      pageSize: pagination.pageSize,
+      page: page.value, pageSize: pageSize.value,
       status: statusFilter.value || undefined,
       orderType: typeFilter.value || undefined,
       keyword: keyword.value || undefined,
-      startDate: dateRange.value?.[0],
-      endDate: dateRange.value?.[1]
+      startDate: startDate.value || undefined,
+      endDate: endDate.value || undefined,
     })
-
     const data = res.data || res
     tableData.value = data.records || []
-    pagination.total = data.total || 0
-
-    // 更新统计数据
-    if (data.stats) {
-      stats.totalIncome = data.stats.totalIncome || 0
-      stats.refundAmount = data.stats.refundAmount || 0
-      stats.successCount = data.stats.successCount || 0
-      stats.refundCount = data.stats.refundCount || 0
-    }
-  } catch (e) {
-    console.error('获取支付列表失败', e)
-    ElMessage.error('获取列表失败')
-  } finally {
-    loading.value = false
-  }
+    total.value = data.total || 0
+    if (data.stats) Object.assign(stats, data.stats)
+  } catch (e) { console.error(e) } finally { loading.value = false }
 }
 
-function handleSearch() {
-  pagination.page = 1
-  fetchList()
-}
-
-function refreshData() {
-  fetchList()
-  ElMessage.success('已刷新')
-}
+function handleSearch() { page.value = 1; fetchList() }
+function refreshData() { fetchList() }
 
 function showDetail(row: PaymentVO) {
   currentPayment.value = row
-  detailVisible.value = true
+  const modal = document.getElementById('payment_detail_modal') as HTMLDialogElement
+  modal?.showModal()
 }
 
 async function handleRefund(row: PaymentVO) {
+  if (!confirm(`确定要为用户【${row.userName || 'ID:' + row.userId}】退款 ¥${formatAmount(row.amount)} 吗？`)) return
   try {
-    await ElMessageBox.confirm(
-      `确定要为用户【${row.userName || 'ID:' + row.userId}】退款 ¥${formatAmount(row.amount)} 吗？`,
-      '退款确认',
-      { type: 'warning', confirmButtonText: '确认退款' }
-    )
     await refundPayment(row.id)
-    ElMessage.success('退款成功')
-    detailVisible.value = false
-    fetchList()
-  } catch (e: any) {
-    if (e !== 'cancel') {
-      ElMessage.error('退款失败')
-    }
-  }
+    row.payStatus = 3
+  } catch { alert('退款失败') }
 }
 
 async function exportData() {
   try {
-    ElMessage.warning('正在生成导出文件，请稍候...')
-    
-    // 构建查询参数
     const params = new URLSearchParams()
     if (statusFilter.value) params.append('status', String(statusFilter.value))
     if (typeFilter.value) params.append('orderType', String(typeFilter.value))
     if (keyword.value) params.append('keyword', keyword.value)
-    if (dateRange.value?.[0]) params.append('startDate', dateRange.value[0])
-    if (dateRange.value?.[1]) params.append('endDate', dateRange.value[1])
-    
-    // 获取 token
+    if (startDate.value) params.append('startDate', startDate.value)
+    if (endDate.value) params.append('endDate', endDate.value)
     const token = localStorage.getItem('token') || localStorage.getItem('access_token')
-    
-    // 调用后端导出接口
     const response = await fetch(`/api/v1/admin/payment/export?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
-      }
+      headers: { 'Authorization': token ? `Bearer ${token}` : '' }
     })
-    
-    if (!response.ok) {
-      throw new Error('导出失败')
-    }
-    
-    // 获取文件名
-    const contentDisposition = response.headers.get('Content-Disposition')
-    let fileName = `支付记录_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename\*=?['"]?([^;'\n]+)/)
-      if (match) {
-        fileName = decodeURIComponent(match[1])
-      }
-    }
-    
-    // 下载文件
+    if (!response.ok) throw new Error('导出失败')
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = fileName
+    link.download = `支付记录_${new Date().toISOString().slice(0, 10)}.xlsx`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    
-    ElMessage.success('导出成功')
-  } catch (e: any) {
-    console.error('导出失败', e)
-    ElMessage.error(e.message || '导出失败，请重试')
-  }
+  } catch { alert('导出失败') }
 }
 
-onMounted(() => {
-  fetchList()
-})
+onMounted(() => { fetchList() })
 </script>
-
-<style scoped lang="scss">
-</style>

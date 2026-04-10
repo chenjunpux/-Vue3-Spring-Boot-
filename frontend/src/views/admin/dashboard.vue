@@ -1,108 +1,128 @@
 <template>
-  <div class="admin-page admin-dashboard">
-    <!-- 统计卡片 -->
-    <div class="stats-grid">
-      <div v-for="(stat, index) in statsData" :key="index" class="stat-card" :style="{ '--accent': stat.color }">
-        <div class="stat-icon" :style="{ background: stat.bgColor }">
-          <i :class="stat.icon"></i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ stat.value }}</div>
-          <div class="stat-label">{{ stat.label }}</div>
-          <div class="stat-trend" :class="stat.trend >= 0 ? 'up' : 'down'">
-            <i :class="stat.trend >= 0 ? 'i-mdi-arrow-up' : 'i-mdi-arrow-down'"></i>
-            {{ Math.abs(stat.trend) }}%
+  <div class="admin-page">
+
+    <!-- ========== 统计卡片（DaisyUI stats） ========== -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div v-for="(stat, k) in statsData" :key="k" class="stats shadow">
+        <div class="stat">
+          <div :class="`stat-figure text-${stat.colorClass}`">
+            <component :is="stat.icon" class="w-8 h-8" />
+          </div>
+          <div class="stat-title">{{ stat.label }}</div>
+          <div :class="`stat-value text-${stat.colorClass}`">{{ stat.value }}</div>
+          <div class="stat-desc" :class="stat.trend >= 0 ? 'text-green-500 font-bold' : 'text-red-500 font-bold'">
+            {{ stat.trend >= 0 ? '↗' : '↙' }} {{ Math.abs(stat.trend) }}%
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 图表区域 -->
-    <div class="charts-grid">
-      <div class="chart-card chart-large">
-        <div class="chart-header">
-          <h3>订单趋势</h3>
-          <div class="chart-actions">
-            <el-radio-group v-model="trendDays" size="small" @change="fetchTrendData">
-              <el-radio-button label="7">近7天</el-radio-button>
-              <el-radio-button label="30">近30天</el-radio-button>
-            </el-radio-group>
+    <!-- ========== 图表区域 ========== -->
+    <!-- 第一行：折线图 + 饼图 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <!-- 订单趋势 -->
+      <div class="bg-base-100 rounded-lg shadow border border-base-300 p-4 lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">订单趋势</h3>
+          <div class="join">
+            <button class="join-item btn btn-sm" :class="trendDays === '7' ? 'btn-primary' : 'btn-ghost'" @click="setTrendDays('7')">近7天</button>
+            <button class="join-item btn btn-sm" :class="trendDays === '30' ? 'btn-primary' : 'btn-ghost'" @click="setTrendDays('30')">近30天</button>
           </div>
         </div>
-        <div ref="orderChartRef" class="chart-container"></div>
+        <div ref="orderChartRef" class="h-64"></div>
       </div>
 
-      <div class="chart-card chart-small">
-        <div class="chart-header">
-          <h3>订单类型占比</h3>
+      <!-- 饼图 -->
+      <div class="bg-base-100 rounded-lg shadow border border-base-300 p-4">
+        <div class="mb-4">
+          <h3 class="font-semibold">订单类型占比</h3>
         </div>
-        <div ref="pieChartRef" class="chart-container"></div>
+        <div ref="pieChartRef" class="h-64"></div>
       </div>
     </div>
 
-    <!-- 第二行图表 -->
-    <div class="charts-grid">
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>用户增长</h3>
+    <!-- 第二行：用户增长 + 柱状图 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-base-100 rounded-lg shadow border border-base-300 p-4">
+        <div class="mb-4">
+          <h3 class="font-semibold">用户增长</h3>
         </div>
-        <div ref="userChartRef" class="chart-container"></div>
+        <div ref="userChartRef" class="h-56"></div>
       </div>
 
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>景点 vs 酒店订单</h3>
+      <div class="bg-base-100 rounded-lg shadow border border-base-300 p-4">
+        <div class="mb-4">
+          <h3 class="font-semibold">景点 vs 酒店订单</h3>
         </div>
-        <div ref="barChartRef" class="chart-container"></div>
+        <div ref="barChartRef" class="h-56"></div>
       </div>
     </div>
 
     <!-- 月度统计 -->
-    <div class="chart-card chart-full">
-      <div class="chart-header">
-        <h3>月度订单统计</h3>
-        <div class="chart-actions">
-          <el-radio-group v-model="selectedYear" size="small" @change="fetchMonthlyData">
-            <el-radio-button v-for="y in availableYears" :key="y" :label="y">{{ y }}年</el-radio-button>
-          </el-radio-group>
+    <div class="bg-base-100 rounded-lg shadow border border-base-300 p-4 mb-4">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h3 class="font-semibold">月度订单统计</h3>
+        <div class="join">
+          <button
+            v-for="y in availableYears"
+            :key="y"
+            class="join-item btn btn-sm"
+            :class="selectedYear === y ? 'btn-primary' : 'btn-ghost'"
+            @click="setYear(y)"
+          >{{ y }}年</button>
         </div>
       </div>
-      <div ref="monthlyChartRef" class="chart-container chart-tall"></div>
+      <div ref="monthlyChartRef" class="h-72"></div>
     </div>
 
-    <!-- 订单列表 -->
-    <div class="order-list-card">
-      <div class="card-header">
-        <h3>最新订单</h3>
-        <el-button type="primary" text @click="$router.push('/admin/orders')">
-          查看更多 <i class="i-mdi-arrow-right ml-1"></i>
-        </el-button>
+    <!-- 最新订单列表 -->
+    <div class="bg-base-100 rounded-lg shadow border border-base-300 overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-base-300">
+        <h3 class="font-semibold">最新订单</h3>
+        <router-link to="/admin/orders" class="btn btn-primary btn-sm">
+          查看更多
+        </router-link>
       </div>
-      <el-table :data="recentOrders" v-loading="loading" stripe>
-        <el-table-column prop="orderNo" label="订单号" width="180" />
-        <el-table-column prop="userId" label="用户ID" width="100" />
-        <el-table-column prop="targetName" label="景点/酒店" min-width="150" />
-        <el-table-column prop="totalAmount" label="金额" width="100">
-          <template #default="{ row }">
-            <span class="text-green-600 font-medium">¥{{ row.totalAmount }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
-              {{ getStatusText(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="orderType" label="类型" width="80">
-          <template #default="{ row }">
-            <span>{{ row.orderType === 1 ? '景点' : '酒店' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdAt" label="下单时间" width="170">
-          <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
-        </el-table-column>
-      </el-table>
+
+      <!-- 加载状态 -->
+      <div v-if="loading" class="flex items-center justify-center p-8">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- 表格 -->
+      <div v-else class="overflow-x-auto">
+        <table class="table table-zebra w-full text-sm">
+          <thead>
+            <tr>
+              <th>订单号</th>
+              <th>用户ID</th>
+              <th>景点/酒店</th>
+              <th>金额</th>
+              <th>状态</th>
+              <th>类型</th>
+              <th>下单时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in recentOrders" :key="row.orderNo">
+              <td class="font-mono text-xs">{{ row.orderNo }}</td>
+              <td>{{ row.userId }}</td>
+              <td>{{ row.targetName }}</td>
+              <td class="text-green-600 font-medium">¥{{ row.totalAmount }}</td>
+              <td>
+                <span :class="getStatusBadgeClass(row.status)" class="badge badge-sm">
+                  {{ getStatusText(row.status) }}
+                </span>
+              </td>
+              <td>{{ row.orderType === 1 ? '景点' : '酒店' }}</td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+            </tr>
+            <tr v-if="recentOrders.length === 0">
+              <td colspan="7" class="text-center py-8 text-neutral/50">暂无数据</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
@@ -113,12 +133,20 @@ import * as echarts from 'echarts'
 import { getDashboardData, getOrderTrend, getUserGrowth, getMonthlyStats } from '@/api/admin'
 import dayjs from 'dayjs'
 
+// Heroicons
+import {
+  UserGroupIcon,
+  ShoppingCartIcon,
+  CurrencyDollarIcon,
+  MapPinIcon,
+} from '@heroicons/vue/24/outline'
+
 // 图表 refs
-const orderChartRef = ref()
-const pieChartRef = ref()
-const userChartRef = ref()
-const barChartRef = ref()
-const monthlyChartRef = ref()
+const orderChartRef = ref<HTMLElement>()
+const pieChartRef = ref<HTMLElement>()
+const userChartRef = ref<HTMLElement>()
+const barChartRef = ref<HTMLElement>()
+const monthlyChartRef = ref<HTMLElement>()
 
 // 图表实例
 let orderChart: echarts.ECharts
@@ -140,47 +168,43 @@ const statsData = reactive([
   {
     label: '总用户数',
     value: '—',
-    icon: 'i-mdi-account',
-    color: '#3b82f6',
-    bgColor: 'rgba(59, 130, 246, 0.1)',
-    trend: 12.5
+    icon: UserGroupIcon,
+    colorClass: 'primary',
+    trend: 12.5,
   },
   {
     label: '今日订单',
     value: '—',
-    icon: 'i-mdi-cart',
-    color: '#10b981',
-    bgColor: 'rgba(16, 185, 129, 0.1)',
-    trend: 8.3
+    icon: ShoppingCartIcon,
+    colorClass: 'success',
+    trend: 8.3,
   },
   {
     label: '总收入',
     value: '—',
-    icon: 'i-mdi-cash-register',
-    color: '#f59e0b',
-    bgColor: 'rgba(245, 158, 11, 0.1)',
-    trend: 15.2
+    icon: CurrencyDollarIcon,
+    colorClass: 'warning',
+    trend: 15.2,
   },
   {
     label: '景点总数',
     value: '—',
-    icon: 'i-mdi-map-marker',
-    color: '#8b5cf6',
-    bgColor: 'rgba(139, 92, 246, 0.1)',
-    trend: 5.7
-  }
+    icon: MapPinIcon,
+    colorClass: 'secondary',
+    trend: 5.7,
+  },
 ])
 
 // 状态映射
-const statusMap: Record<number, { text: string; type: string }> = {
-  1: { text: '待支付', type: 'warning' },
-  2: { text: '已支付', type: 'success' },
-  3: { text: '已取消', type: 'info' },
-  4: { text: '已退款', type: 'danger' },
+const statusMap: Record<number, { text: string; cls: string }> = {
+  1: { text: '待支付', cls: 'badge-warning' },
+  2: { text: '已支付', cls: 'badge-success' },
+  3: { text: '已取消', cls: 'badge-neutral' },
+  4: { text: '已退款', cls: 'badge-error' },
 }
 
-function getStatusType(status: number) {
-  return statusMap[status]?.type || 'info'
+function getStatusBadgeClass(status: number) {
+  return statusMap[status]?.cls || 'badge-neutral'
 }
 
 function getStatusText(status: number) {
@@ -190,6 +214,16 @@ function getStatusText(status: number) {
 function formatDate(dateStr: string) {
   if (!dateStr) return '—'
   return dayjs(dateStr).format('YYYY-MM-DD HH:mm')
+}
+
+function setTrendDays(days: string) {
+  trendDays.value = days
+  fetchTrendData()
+}
+
+function setYear(year: number) {
+  selectedYear.value = year
+  fetchMonthlyData()
 }
 
 // 获取仪表盘数据
@@ -401,13 +435,11 @@ async function fetchMonthlyData() {
 
 // 初始化图表
 function initCharts() {
-  orderChart = echarts.init(orderChartRef.value)
-  pieChart = echarts.init(pieChartRef.value)
-  userChart = echarts.init(userChartRef.value)
-  barChart = echarts.init(barChartRef.value)
-  monthlyChart = echarts.init(monthlyChartRef.value)
-
-  // 响应式
+  if (orderChartRef.value) orderChart = echarts.init(orderChartRef.value)
+  if (pieChartRef.value) pieChart = echarts.init(pieChartRef.value)
+  if (userChartRef.value) userChart = echarts.init(userChartRef.value)
+  if (barChartRef.value) barChart = echarts.init(barChartRef.value)
+  if (monthlyChartRef.value) monthlyChart = echarts.init(monthlyChartRef.value)
   window.addEventListener('resize', handleResize)
 }
 
@@ -435,190 +467,3 @@ onUnmounted(() => {
   monthlyChart?.dispose()
 })
 </script>
-
-<style scoped lang="scss">
-.admin-dashboard {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-// 统计卡片网格
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
-
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.stat-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s;
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-  }
-}
-
-:global(.dark) .stat-card {
-  background: #1f2937;
-  border-color: #374151;
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: var(--accent);
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-  line-height: 1.2;
-}
-
-:global(.dark) .stat-value {
-  color: #f9fafb;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-:global(.dark) .stat-label {
-  color: #9ca3af;
-}
-
-.stat-trend {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  margin-top: 8px;
-  padding: 2px 8px;
-  border-radius: 4px;
-
-  &.up {
-    color: #10b981;
-    background: rgba(16, 185, 129, 0.1);
-  }
-
-  &.down {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-  }
-}
-
-// 图表网格
-.charts-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.chart-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-}
-
-:global(.dark) .chart-card {
-  background: #1f2937;
-  border-color: #374151;
-}
-
-.chart-full {
-  margin-bottom: 24px;
-}
-
-.chart-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
-  }
-
-  :global(.dark) & h3 {
-    color: #f9fafb;
-  }
-}
-
-.chart-container {
-  height: 280px;
-}
-
-.chart-tall {
-  height: 320px;
-}
-
-// 订单列表卡片
-.order-list-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-}
-
-:global(.dark) .order-list-card {
-  background: #1f2937;
-  border-color: #374151;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
-  }
-
-  :global(.dark) & h3 {
-    color: #f9fafb;
-  }
-}
-</style>

@@ -1,160 +1,160 @@
 <template>
   <div class="admin-page">
-    <!-- 数据卡片 -->
-    <div class="admin-card">
+    <div class="bg-base-100 rounded-lg shadow border border-base-300 overflow-hidden">
+
       <!-- 操作栏 -->
-      <div class="admin-header">
-        <div class="admin-header-left">
-          <el-select v-model="statusFilter" placeholder="审核状态" clearable class="admin-search" @change="fetchList">
-            <el-option label="待审核" :value="0" />
-            <el-option label="已通过" :value="1" />
-            <el-option label="已拒绝" :value="2" />
-          </el-select>
-        </div>
+      <div class="flex items-center flex-wrap gap-3 p-4 border-b border-base-300">
+        <select v-model="statusFilter" class="select select-bordered w-36" @change="page = 1; fetchList()">
+          <option value="">全部状态</option>
+          <option :value="0">待审核</option>
+          <option :value="1">已通过</option>
+          <option :value="2">已拒绝</option>
+        </select>
       </div>
 
-      <!-- 数据表格 -->
-      <div class="admin-table">
-        <el-table :data="tableData" v-loading="loading" stripe>
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column label="封面" width="100">
-            <template #default="{ row }">
-              <el-image v-if="row.coverImage" :src="row.coverImage" fit="cover" class="admin-cover" />
-              <span v-else class="text-gray-400">暂无</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="title" label="标题" min-width="200">
-            <template #default="{ row }">
-              <div class="font-medium">{{ row.title }}</div>
-              <div class="text-sm text-gray-500 truncate max-w-xs">{{ row.summary }}</div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="authorName" label="作者" width="120" />
-          <el-table-column prop="viewCount" label="浏览" width="80" />
-          <el-table-column prop="likeCount" label="点赞" width="80" />
-          <el-table-column prop="isTop" label="置顶" width="80">
-            <template #default="{ row }">
-              <el-tag :type="row.isTop ? 'warning' : 'info'" size="small">{{ row.isTop ? '是' : '否' }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
-            <template #default="{ row }">
-              <el-tag :type="getStatusType(row.status)" size="small">{{ getStatusText(row.status) }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdAt" label="发布时间" width="170">
-            <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
-          </el-table-column>
-          <el-table-column label="操作" width="220" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" text size="small" @click="showDetail(row)">查看</el-button>
-              <el-button v-if="row.status === 0" type="success" text size="small" @click="audit(row, 1)">通过</el-button>
-              <el-button v-if="row.status === 0" type="danger" text size="small" @click="audit(row, 2)">拒绝</el-button>
-              <el-button :type="row.isTop ? 'warning' : 'primary'" text size="small" @click="toggleTop(row)">
-                {{ row.isTop ? '取消置顶' : '置顶' }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+      <!-- 加载 -->
+      <div v-if="loading" class="flex items-center justify-center p-8">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- 表格 -->
+      <div v-else class="overflow-x-auto">
+        <table class="table table-zebra w-full text-sm">
+          <thead>
+            <tr>
+              <th>ID</th><th>封面</th><th>标题</th><th>作者</th><th>浏览</th><th>点赞</th><th>置顶</th><th>状态</th><th>发布时间</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in tableData" :key="row.id">
+              <td class="font-mono">{{ row.id }}</td>
+              <td>
+                <div class="avatar"><div class="w-12 rounded">
+                    <img v-if="row.coverImage" :src="row.coverImage" :alt="row.title" />
+                    <div v-else class="bg-base-300 w-full h-full flex items-center justify-center text-xs">无</div>
+                </div></div>
+              </td>
+              <td>
+                <div class="font-medium max-w-xs truncate">{{ row.title }}</div>
+                <div class="text-xs opacity-60 max-w-xs truncate">{{ row.summary }}</div>
+              </td>
+              <td>{{ row.authorName }}</td>
+              <td>{{ row.viewCount }}</td>
+              <td>{{ row.likeCount }}</td>
+              <td>
+                <span :class="row.isTop ? 'badge-warning' : 'badge-neutral'" class="badge badge-sm">
+                  {{ row.isTop ? '是' : '否' }}
+                </span>
+              </td>
+              <td>
+                <span :class="getStatusBadgeClass(row.status)" class="badge badge-sm">
+                  {{ getStatusText(row.status) }}
+                </span>
+              </td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+              <td>
+                <div class="flex gap-1 flex-wrap">
+                  <button class="btn btn-primary btn-xs" @click="showDetail(row)">查看</button>
+                  <button v-if="row.status === 0" class="btn btn-success btn-xs" @click="audit(row, 1)">通过</button>
+                  <button v-if="row.status === 0" class="btn btn-error btn-xs" @click="audit(row, 2)">拒绝</button>
+                  <button :class="row.isTop ? 'btn-warning' : 'btn-primary'" class="btn btn-xs" @click="toggleTop(row)">
+                    {{ row.isTop ? '取消置顶' : '置顶' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="tableData.length === 0">
+              <td colspan="10" class="text-center py-8 text-neutral/50">暂无数据</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- 分页 -->
-      <div class="admin-pagination">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :total="pagination.total"
-          :page-sizes="[10, 20, 50]"
-          :page-count="pageCount"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchList"
-          @current-change="fetchList"
-        />
+      <div class="flex items-center justify-between p-4 border-t border-base-300 flex-wrap gap-2">
+        <span class="text-sm text-neutral/60">共 {{ total }} 条</span>
+        <div class="join">
+          <button class="join-item btn btn-sm" :disabled="page <= 1" @click="page--; fetchList()">«</button>
+          <button class="join-item btn btn-sm disabled">第 {{ page }} / {{ totalPages || 1 }} 页</button>
+          <button class="join-item btn btn-sm" :disabled="page >= (totalPages || 1)" @click="page++; fetchList()">»</button>
+        </div>
       </div>
     </div>
 
-    <!-- 详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="游记详情" width="700px">
-      <div v-if="currentArticle" class="article-detail">
-        <h2>{{ currentArticle.title }}</h2>
-        <div class="meta">
-          <span>作者：{{ currentArticle.authorName }}</span>
-          <span>发布时间：{{ formatDate(currentArticle.createdAt) }}</span>
-          <span>浏览：{{ currentArticle.viewCount }}</span>
-          <span>点赞：{{ currentArticle.likeCount }}</span>
+    <!-- 详情 Modal -->
+    <dialog id="article_detail_modal" class="modal">
+      <div class="modal-box max-w-2xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-2">{{ currentArticle?.title }}</h3>
+        <div class="flex gap-4 text-sm text-neutral/60 mb-4 flex-wrap">
+          <span>作者：{{ currentArticle?.authorName }}</span>
+          <span>浏览：{{ currentArticle?.viewCount }}</span>
+          <span>点赞：{{ currentArticle?.likeCount }}</span>
+          <span>{{ formatDate(currentArticle?.createdAt) }}</span>
         </div>
-        <el-image v-if="currentArticle.coverImage" :src="currentArticle.coverImage" class="detail-cover" />
-        <div class="content">{{ currentArticle.content || currentArticle.summary || '暂无内容' }}</div>
+        <img v-if="currentArticle?.coverImage" :src="currentArticle.coverImage" class="w-full h-48 object-cover rounded-lg mb-4" />
+        <div class="prose prose-sm max-w-none">{{ currentArticle?.content || currentArticle?.summary || '暂无内容' }}</div>
       </div>
-    </el-dialog>
+      <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted } from 'vue'
 import { getAdminArticleList, updateArticleStatus, toggleArticleTop } from '@/api/admin'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
-const statusFilter = ref<number | ''>('')
+const statusFilter = ref<number | string>('')
 const tableData = ref<any[]>([])
-const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
-const pageCount = computed(() => Math.ceil(pagination.total / pagination.pageSize) || 1)
-
-const detailVisible = ref(false)
+const page = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = computed(() => Math.ceil(total.value / pageSize.value) || 1)
 const currentArticle = ref<any>(null)
 
-const statusMap: Record<number, { text: string; type: string }> = {
-  0: { text: '待审核', type: 'warning' },
-  1: { text: '已通过', type: 'success' },
-  2: { text: '已拒绝', type: 'danger' },
+const statusMap: Record<number, { text: string; cls: string }> = {
+  0: { text: '待审核', cls: 'badge-warning' },
+  1: { text: '已通过', cls: 'badge-success' },
+  2: { text: '已拒绝', cls: 'badge-error' },
 }
 
-function getStatusType(status: number) { return statusMap[status]?.type || 'info' }
-function getStatusText(status: number) { return statusMap[status]?.text || '未知' }
-function formatDate(dateStr: string) { return dateStr ? dayjs(dateStr).format('YYYY-MM-DD HH:mm') : '-' }
+function getStatusBadgeClass(s: number) { return statusMap[s]?.cls || 'badge-neutral' }
+function getStatusText(s: number) { return statusMap[s]?.text || '未知' }
+function formatDate(d: string) { return d ? dayjs(d).format('YYYY-MM-DD HH:mm') : '-' }
 
 async function fetchList() {
   try {
     loading.value = true
     const res: any = await getAdminArticleList({
-      page: pagination.page, pageSize: pagination.pageSize,
-      status: statusFilter.value || undefined
+      page: page.value, pageSize: pageSize.value,
+      status: statusFilter.value !== '' ? Number(statusFilter.value) : undefined,
     })
     tableData.value = res.data?.records || res.records || []
-    pagination.total = res.data?.total || res.total || 0
-  } catch (e) { ElMessage.error('获取列表失败') } finally { loading.value = false }
+    total.value = res.data?.total || res.total || 0
+  } catch { console.error('获取列表失败') } finally { loading.value = false }
 }
 
-function showDetail(row: any) { currentArticle.value = row; detailVisible.value = true }
+function showDetail(row: any) {
+  currentArticle.value = row
+  const modal = document.getElementById('article_detail_modal') as HTMLDialogElement
+  modal?.showModal()
+}
 
 async function audit(row: any, status: number) {
-  try {
-    await ElMessageBox.confirm(`确定要${status === 1 ? '通过' : '拒绝'}该游记吗？`, '审核确认', { type: 'warning' })
-    await updateArticleStatus(row.id, status)
-    ElMessage.success('操作成功')
-    fetchList()
-  } catch (e: any) { if (e !== 'cancel') ElMessage.error('操作失败') }
+  if (!confirm(`确定要${status === 1 ? '通过' : '拒绝'}该游记吗？`)) return
+  try { await updateArticleStatus(row.id, status); fetchList() }
+  catch { alert('操作失败') }
 }
 
 async function toggleTop(row: any) {
-  try {
-    await ElMessageBox.confirm(`确定要${row.isTop ? '取消置顶' : '置顶'}该游记吗？`, '提示', { type: 'warning' })
-    await toggleArticleTop(row.id)
-    ElMessage.success('操作成功')
-    fetchList()
-  } catch (e: any) { if (e !== 'cancel') ElMessage.error('操作失败') }
+  if (!confirm(`确定要${row.isTop ? '取消置顶' : '置顶'}该游记吗？`)) return
+  try { await toggleArticleTop(row.id); fetchList() }
+  catch { alert('操作失败') }
 }
 
 onMounted(() => { fetchList() })
 </script>
-
-<style scoped lang="scss">
-.article-detail {
-  h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
-  .meta { display: flex; gap: 16px; color: #6b7280; font-size: 14px; margin-bottom: 16px; }
-  .detail-cover { width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 16px; }
-  .content { line-height: 1.8; color: #374151; }
-}
-</style>

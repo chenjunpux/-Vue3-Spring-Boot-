@@ -1,206 +1,267 @@
 <template>
-  <div class="admin-page admin-hotels">
+  <div class="admin-page">
+
     <!-- 数据卡片 -->
-    <div class="data-card">
+    <div class="bg-base-100 rounded-lg shadow border border-base-300 overflow-hidden">
+
       <!-- 操作栏 -->
-      <div class="admin-header">
-        <div class="admin-header-left">
-          <el-input v-model="keyword" placeholder="搜索酒店名称" clearable class="admin-search" @clear="handleSearch"
-            @keyup.enter="handleSearch">
-            <template #prefix>
-              <i class="i-mdi-magnify"></i>
-            </template>
-          </el-input>
-          <el-select v-model="statusFilter" placeholder="状态筛选" clearable class="admin-search" @change="fetchList">
-            <el-option label="上架" :value="1" />
-            <el-option label="下架" :value="0" />
-          </el-select>
+      <div class="flex items-center justify-between flex-wrap gap-3 p-4 border-b border-base-300">
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="join">
+            <input v-model="keyword" class="input input-bordered join-item w-60" placeholder="搜索酒店名称"
+              @keyup.enter="handleSearch" />
+            <button class="btn join-item" @click="handleSearch"><MagnifyingGlassIcon class="w-4 h-4" /></button>
+          </div>
+          <select v-model="statusFilter" class="select select-bordered w-28" @change="fetchList">
+            <option value="">全部状态</option>
+            <option :value="1">上架</option>
+            <option :value="0">下架</option>
+          </select>
         </div>
-        <div class="admin-header-right">
-          <el-button type="primary" @click="openForm()">
-            <i class="i-mdi-plus mr-1"></i> 新增酒店
-          </el-button>
-        </div>
+        <button class="btn btn-primary" @click="openForm()">
+          <PlusIcon class="w-4 h-4 mr-1" /> 新增酒店
+        </button>
       </div>
 
-      <!-- 数据表格 -->
-      <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="封面" width="100">
-          <template #default="{ row }">
-            <el-image v-if="row.coverImage" :src="row.coverImage" fit="cover" class="admin-cover" />
-            <span v-else class="text-gray-400">暂无</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="name" label="酒店名称" min-width="150">
-          <template #default="{ row }">
-            <div class="font-medium">{{ row.name }}</div>
-            <div class="text-sm text-gray-500">{{ row.city }}</div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="starLevel" label="星级" width="120">
-          <template #default="{ row }">
-            <el-rate v-model="row.starLevel" disabled text-color="#ff9900" />
-          </template>
-        </el-table-column>
-        <el-table-column prop="address" label="地址" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
-              {{ row.status === 1 ? '上架' : '下架' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="300" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" text size="small" @click="openRooms(row)">
-              房型管理
-            </el-button>
-            <el-button type="primary" text size="small" @click="openForm(row)">
-              编辑
-            </el-button>
-            <el-button :type="row.status === 1 ? 'warning' : 'success'" text size="small" @click="toggleStatus(row)">
-              {{ row.status === 1 ? '下架' : '上架' }}
-            </el-button>
-            <el-button type="danger" text size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 加载 -->
+      <div v-if="loading" class="flex items-center justify-center p-8">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- 表格 -->
+      <div v-else class="overflow-x-auto">
+        <table class="table table-zebra w-full text-sm">
+          <thead>
+            <tr>
+              <th>ID</th><th>封面</th><th>酒店名称</th><th>星级</th>
+              <th>地址</th><th>状态</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in tableData" :key="row.id">
+              <td class="font-mono">{{ row.id }}</td>
+              <td>
+                <div class="avatar"><div class="w-12 rounded">
+                    <img v-if="row.coverImage" :src="row.coverImage" :alt="row.name" />
+                    <div v-else class="bg-base-300 w-full h-full flex items-center justify-center text-xs">无</div>
+                </div></div>
+              </td>
+              <td>
+                <div class="font-medium">{{ row.name }}</div>
+                <div class="text-xs opacity-60">{{ row.city }}</div>
+              </td>
+              <td>
+                <div class="rating rating-sm">
+                  <input v-for="n in 5" :key="n" type="radio" class="mask mask-star-2 bg-orange-400"
+                    :checked="n <= row.starLevel" disabled />
+                </div>
+              </td>
+              <td class="max-w-xs truncate">{{ row.address || '-' }}</td>
+              <td>
+                <span :class="row.status === 1 ? 'badge-success' : 'badge-neutral'" class="badge badge-sm">
+                  {{ row.status === 1 ? '上架' : '下架' }}
+                </span>
+              </td>
+              <td>
+                <div class="flex gap-1 flex-wrap">
+                  <button class="btn btn-primary btn-xs" @click="openRooms(row)">房型</button>
+                  <button class="btn btn-primary btn-xs" @click="openForm(row)">编辑</button>
+                  <button :class="row.status === 1 ? 'btn-warning' : 'btn-success'" class="btn btn-xs" @click="toggleStatus(row)">
+                    {{ row.status === 1 ? '下架' : '上架' }}
+                  </button>
+                  <button class="btn btn-error btn-xs" @click="handleDelete(row)">删除</button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="tableData.length === 0">
+              <td colspan="7" class="text-center py-8 text-neutral/50">暂无数据</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- 分页 -->
-      <div class="admin-pagination">
-        <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-          :total="pagination.total" :page-sizes="[10, 20, 50, 100]" :page-count="pageCount"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchList" @current-change="fetchList" />
+      <div class="flex items-center justify-between p-4 border-t border-base-300 flex-wrap gap-2">
+        <span class="text-sm text-neutral/60">共 {{ total }} 条</span>
+        <div class="join">
+          <button class="join-item btn btn-sm" :disabled="page <= 1" @click="page--; fetchList()">«</button>
+          <button class="join-item btn btn-sm disabled">第 {{ page }} / {{ totalPages || 1 }} 页</button>
+          <button class="join-item btn btn-sm" :disabled="page >= (totalPages || 1)" @click="page++; fetchList()">»</button>
+        </div>
       </div>
     </div>
 
-    <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="formVisible" :title="isEdit ? '编辑酒店' : '新增酒店'" width="700px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px">
-        <el-form-item label="酒店名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入酒店名称" />
-        </el-form-item>
-        <el-form-item label="封面图片" prop="coverImage">
-          <el-input v-model="formData.coverImage" placeholder="请输入封面图片URL" />
-        </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="所在城市" prop="city">
-              <el-input v-model="formData.city" placeholder="请输入城市" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="酒店星级" prop="starLevel">
-              <el-rate v-model="formData.starLevel" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item label="详细地址" prop="address">
-          <el-input v-model="formData.address" placeholder="请输入详细地址" />
-        </el-form-item>
-        <el-form-item label="酒店设施" prop="facilities">
-          <el-input v-model="formData.facilities" type="textarea" :rows="3" placeholder="如：WiFi,停车场,游泳池" />
-        </el-form-item>
-        <el-form-item label="酒店描述" prop="description">
-          <el-input v-model="formData.description" type="textarea" :rows="4" placeholder="请输入酒店描述" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="formVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 房型管理弹窗 -->
-    <el-dialog v-model="roomsVisible" title="房型管理" width="900px">
-      <div class="room-toolbar">
-        <el-button type="primary" size="small" @click="openRoomForm()">
-          <i class="i-mdi-plus mr-1"></i> 新增房型
-        </el-button>
+    <!-- 酒店表单 Modal -->
+    <dialog id="hotel_form_modal" class="modal">
+      <div class="modal-box max-w-2xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">{{ isEdit ? '编辑酒店' : '新增酒店' }}</h3>
+        <div class="space-y-3">
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">酒店名称 *</span></div>
+            <input v-model="formData.name" class="input input-bordered w-full" placeholder="请输入酒店名称" />
+          </label>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">封面图片URL</span></div>
+            <input v-model="formData.coverImage" class="input input-bordered w-full" placeholder="图片URL" />
+          </label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">所在城市 *</span></div>
+              <input v-model="formData.city" class="input input-bordered w-full" placeholder="城市" />
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">酒店星级</span></div>
+              <select v-model="formData.starLevel" class="select select-bordered">
+                <option :value="1">一星级</option>
+                <option :value="2">二星级</option>
+                <option :value="3">三星级</option>
+                <option :value="4">四星级</option>
+                <option :value="5">五星级</option>
+              </select>
+            </label>
+          </div>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">详细地址</span></div>
+            <input v-model="formData.address" class="input input-bordered w-full" placeholder="详细地址" />
+          </label>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">酒店设施</span></div>
+            <textarea v-model="formData.facilities" class="textarea textarea-bordered w-full" rows="2"
+              placeholder="如：WiFi,停车场,游泳池"></textarea>
+          </label>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">酒店描述</span></div>
+            <textarea v-model="formData.description" class="textarea textarea-bordered w-full" rows="3"
+              placeholder="酒店描述"></textarea>
+          </label>
+        </div>
+        <div class="modal-action">
+          <form method="dialog"><button class="btn">取消</button></form>
+          <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">
+            <span v-if="submitting" class="loading loading-spinner loading-xs"></span>
+            {{ isEdit ? '更新' : '创建' }}
+          </button>
+        </div>
       </div>
-      <el-table :data="roomsData" stripe size="small">
-        <el-table-column prop="name" label="房型名称" />
-        <el-table-column prop="bedType" label="床型" width="100" />
-        <el-table-column prop="price" label="价格" width="100">
-          <template #default="{ row }">
-            <span class="text-green-600 font-medium">¥{{ row.price }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="maxGuest" label="可住人数" width="100" />
-        <el-table-column prop="totalRooms" label="房间数" width="100" />
-        <el-table-column label="操作" width="120">
-          <template #default="{ row }">
-            <el-button type="primary" text size="small" @click="openRoomForm(row)">编辑</el-button>
-            <el-button type="danger" text size="small" @click="deleteRoom(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
 
-      <!-- 新增/编辑房型 -->
-      <el-dialog v-model="roomFormVisible" :title="isRoomEdit ? '编辑房型' : '新增房型'" width="500px" append-to-body>
-        <el-form ref="roomFormRef" :model="roomForm" label-width="100px">
-          <el-form-item label="房型名称" required>
-            <el-input v-model="roomForm.name" placeholder="如：豪华大床房" />
-          </el-form-item>
-          <el-form-item label="床型" required>
-            <el-input v-model="roomForm.bedType" placeholder="如：大床1.8m" />
-          </el-form-item>
-          <el-form-item label="价格/晚" required>
-            <el-input-number v-model="roomForm.price" :min="0" :precision="2" />
-          </el-form-item>
-          <el-form-item label="可住人数" required>
-            <el-input-number v-model="roomForm.maxGuest" :min="1" :max="10" />
-          </el-form-item>
-          <el-form-item label="房间数量" required>
-            <el-input-number v-model="roomForm.totalRooms" :min="1" />
-          </el-form-item>
-          <el-form-item label="设施">
-            <el-input v-model="roomForm.amenities" placeholder="如：WiFi,空调,电视" />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="roomFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleRoomSubmit">确定</el-button>
-        </template>
-      </el-dialog>
-    </el-dialog>
+    <!-- 房型管理 Modal -->
+    <dialog id="rooms_modal" class="modal">
+      <div class="modal-box max-w-3xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">房型管理</h3>
+
+        <div class="mb-3">
+          <button class="btn btn-primary btn-sm" @click.prevent="openRoomForm()">
+            <PlusIcon class="w-4 h-4 mr-1" /> 新增房型
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full text-sm">
+            <thead><tr><th>房型名称</th><th>床型</th><th>价格/晚</th><th>可住人数</th><th>房间数</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="r in roomsData" :key="r.id">
+                <td>{{ r.name }}</td><td>{{ r.bedType }}</td>
+                <td class="text-green-600 font-medium">¥{{ r.price }}</td>
+                <td>{{ r.maxGuest }}人</td><td>{{ r.totalRooms }}</td>
+                <td>
+                  <div class="flex gap-1">
+                    <button class="btn btn-primary btn-xs" @click.prevent="openRoomForm(r)">编辑</button>
+                    <button class="btn btn-error btn-xs" @click.prevent="deleteRoom(r)">删除</button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="roomsData.length === 0">
+                <td colspan="6" class="text-center py-6 text-neutral/50">暂无房型</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <!-- 房型表单 Modal -->
+    <dialog id="room_form_modal" class="modal">
+      <div class="modal-box">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">{{ isRoomEdit ? '编辑房型' : '新增房型' }}</h3>
+        <div class="space-y-3">
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">房型名称 *</span></div>
+            <input v-model="roomForm.name" class="input input-bordered w-full" placeholder="如：豪华大床房" />
+          </label>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">床型 *</span></div>
+            <input v-model="roomForm.bedType" class="input input-bordered w-full" placeholder="如：大床1.8m" />
+          </label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">价格/晚 *</span></div>
+              <input v-model.number="roomForm.price" type="number" min="0" step="0.01"
+                class="input input-bordered w-full" />
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">可住人数 *</span></div>
+              <input v-model.number="roomForm.maxGuest" type="number" min="1" max="10"
+                class="input input-bordered w-full" />
+            </label>
+          </div>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">房间数量 *</span></div>
+            <input v-model.number="roomForm.totalRooms" type="number" min="1"
+              class="input input-bordered w-full" />
+          </label>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">设施</span></div>
+            <input v-model="roomForm.amenities" class="input input-bordered w-full"
+              placeholder="如：WiFi,空调,电视" />
+          </label>
+        </div>
+        <div class="modal-action">
+          <form method="dialog"><button class="btn">取消</button></form>
+          <button class="btn btn-primary" @click.prevent="handleRoomSubmit">确定</button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getAdminHotelList, createHotel, updateHotel, deleteHotel, updateHotelStatus,
   getHotelRooms, createRoomType, updateRoomType, deleteRoomType
 } from '@/api/admin'
 import type { HotelDTO, RoomTypeDTO } from '@/api/admin'
-import type { FormInstance, FormRules } from 'element-plus'
+import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 const loading = ref(false)
 const keyword = ref('')
-const statusFilter = ref<number | ''>('')
+const statusFilter = ref<number | string>('')
 const tableData = ref<any[]>([])
-const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
-const pageCount = computed(() => Math.ceil(pagination.total / pagination.pageSize) || 1)
+const page = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = computed(() => Math.ceil(total.value / pageSize.value) || 1)
 
-// 酒店表单
 const formVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
-const formRef = ref<FormInstance>()
 const formData = reactive<HotelDTO>({
   name: '', coverImage: '', city: '', address: '',
   longitude: 0, latitude: 0, description: '', starLevel: 3, facilities: '', status: 1
 })
-const rules: FormRules = {
-  name: [{ required: true, message: '请输入酒店名称', trigger: 'blur' }],
-  city: [{ required: true, message: '请输入城市', trigger: 'blur' }]
-}
 
 // 房型
 const roomsVisible = ref(false)
@@ -208,7 +269,6 @@ const roomsData = ref<any[]>([])
 const currentHotelId = ref<number>()
 const roomFormVisible = ref(false)
 const isRoomEdit = ref(false)
-const roomFormRef = ref<FormInstance>()
 const roomForm = reactive<RoomTypeDTO>({
   hotelId: 0, name: '', price: 0, bedType: '', maxGuest: 2, totalRooms: 10, amenities: '', images: ''
 })
@@ -217,78 +277,52 @@ async function fetchList() {
   try {
     loading.value = true
     const res: any = await getAdminHotelList({
-      page: pagination.page, pageSize: pagination.pageSize,
-      keyword: keyword.value || undefined, status: statusFilter.value || undefined
+      page: page.value, pageSize: pageSize.value,
+      keyword: keyword.value || undefined,
+      status: statusFilter.value !== '' ? Number(statusFilter.value) : undefined,
     })
     tableData.value = res.data?.records || res.records || []
-    pagination.total = res.data?.total || res.total || 0
-  } catch (e) {
-    ElMessage.error('获取列表失败')
-  } finally {
-    loading.value = false
-  }
+    total.value = res.data?.total || res.total || 0
+  } catch (e) { console.error(e) } finally { loading.value = false }
 }
 
-function handleSearch() { pagination.page = 1; fetchList() }
+function handleSearch() { page.value = 1; fetchList() }
 
 function openForm(row?: any) {
-  if (row) {
-    isEdit.value = true
-    Object.assign(formData, row)
-  } else {
-    isEdit.value = false
-    Object.assign(formData, { name: '', coverImage: '', city: '', address: '', longitude: 0, latitude: 0, description: '', starLevel: 3, facilities: '', status: 1 })
-  }
-  formVisible.value = true
+  if (row) { isEdit.value = true; Object.assign(formData, row) }
+  else { isEdit.value = false; Object.assign(formData, { name: '', coverImage: '', city: '', address: '', longitude: 0, latitude: 0, description: '', starLevel: 3, facilities: '', status: 1 }) }
+  const modal = document.getElementById('hotel_form_modal') as HTMLDialogElement
+  modal?.showModal()
 }
 
 async function handleSubmit() {
-  if (!formRef.value) return
+  if (!formData.name || !formData.city) { alert('请填写必填项'); return }
   try {
-    await formRef.value.validate()
     submitting.value = true
-    if (isEdit.value) {
-      await updateHotel(formData.id!, formData)
-      ElMessage.success('更新成功')
-    } else {
-      await createHotel(formData)
-      ElMessage.success('创建成功')
-    }
-    formVisible.value = false
+    if (isEdit.value) await updateHotel(formData.id!, formData)
+    else await createHotel(formData)
+    document.getElementById('hotel_form_modal')?.dispatchEvent(new Event('close'))
     fetchList()
-  } catch (e: any) {
-    if (e?.message) ElMessage.error(e.message)
-  } finally {
-    submitting.value = false
-  }
+  } catch { alert('操作失败') } finally { submitting.value = false }
 }
 
 async function toggleStatus(row: any) {
   const newStatus = row.status === 1 ? 0 : 1
-  try {
-    await ElMessageBox.confirm(`确定要${newStatus === 1 ? '上架' : '下架'}该酒店吗？`, '提示', { type: 'warning' })
-    await updateHotelStatus(row.id, newStatus)
-    ElMessage.success('操作成功')
-    fetchList()
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error('操作失败')
-  }
+  if (!confirm(`确定要${newStatus === 1 ? '上架' : '下架'}该酒店吗？`)) return
+  try { await updateHotelStatus(row.id, newStatus); row.status = newStatus }
+  catch { alert('操作失败') }
 }
 
 async function handleDelete(row: any) {
-  try {
-    await ElMessageBox.confirm('确定要删除该酒店吗？', '警告', { type: 'warning', confirmButtonText: '删除' })
-    await deleteHotel(row.id)
-    ElMessage.success('删除成功')
-    fetchList()
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error('删除失败')
-  }
+  if (!confirm(`确定要删除酒店「${row.name}」吗？此操作不可恢复。`)) return
+  try { await deleteHotel(row.id); fetchList() }
+  catch { alert('删除失败') }
 }
 
 async function openRooms(row: any) {
   currentHotelId.value = row.id
-  roomsVisible.value = true
+  const modal = document.getElementById('rooms_modal') as HTMLDialogElement
+  modal?.showModal()
   await fetchRooms()
 }
 
@@ -297,85 +331,31 @@ async function fetchRooms() {
   try {
     const res: any = await getHotelRooms(currentHotelId.value)
     roomsData.value = res.data || res || []
-  } catch (e) {
-    ElMessage.error('获取房型失败')
-  }
+  } catch { alert('获取房型失败') }
 }
 
 function openRoomForm(row?: any) {
-  if (row) {
-    isRoomEdit.value = true
-    Object.assign(roomForm, row)
-  } else {
-    isRoomEdit.value = false
-    Object.assign(roomForm, { hotelId: currentHotelId.value, name: '', price: 0, bedType: '', maxGuest: 2, totalRooms: 10, amenities: '', images: '' })
-  }
-  roomFormVisible.value = true
+  if (row) { isRoomEdit.value = true; Object.assign(roomForm, row) }
+  else { isRoomEdit.value = false; Object.assign(roomForm, { hotelId: currentHotelId.value, name: '', price: 0, bedType: '', maxGuest: 2, totalRooms: 10, amenities: '', images: '' }) }
+  const modal = document.getElementById('room_form_modal') as HTMLDialogElement
+  modal?.showModal()
 }
 
 async function handleRoomSubmit() {
   try {
     roomForm.hotelId = currentHotelId.value!
-    if (isRoomEdit.value) {
-      await updateRoomType(roomForm.id!, roomForm)
-    } else {
-      await createRoomType(roomForm)
-    }
-    ElMessage.success('操作成功')
-    roomFormVisible.value = false
+    if (isRoomEdit.value) await updateRoomType(roomForm.id!, roomForm)
+    else await createRoomType(roomForm)
+    document.getElementById('room_form_modal')?.dispatchEvent(new Event('close'))
     fetchRooms()
-  } catch (e) {
-    ElMessage.error('操作失败')
-  }
+  } catch { alert('操作失败') }
 }
 
 async function deleteRoom(row: any) {
-  try {
-    await ElMessageBox.confirm('确定要删除该房型吗？', '警告', { type: 'warning' })
-    await deleteRoomType(row.id)
-    ElMessage.success('删除成功')
-    fetchRooms()
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error('删除失败')
-  }
+  if (!confirm('确定要删除该房型吗？')) return
+  try { await deleteRoomType(row.id); fetchRooms() }
+  catch { alert('删除失败') }
 }
 
 onMounted(() => { fetchList() })
 </script>
-
-<style scoped lang="scss">
-.admin-hotels {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-/* 数据卡片 */
-.data-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-}
-
-.dark .data-card {
-  background: #1f2937;
-  border-color: #374151;
-}
-
-/* 卡片头部 */
-.card-header {
-  display: flex;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.dark .card-header {
-  border-color: #374151;
-}
-
-
-</style>
