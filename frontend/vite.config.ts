@@ -1,14 +1,10 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueJsx from '@vitejs/plugin-vue-jsx'
-import UnoCSS from 'unocss/vite'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [
     vue(),
-    vueJsx(),
-    UnoCSS(),
   ],
 
   resolve: {
@@ -29,7 +25,6 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
-    // 代理配置（开发环境）
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
@@ -51,7 +46,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'element-plus': ['element-plus'],
           'echarts': ['echarts'],
           'gsap': ['gsap'],
           'vue-core': ['vue', 'vue-router', 'pinia'],
@@ -60,7 +54,6 @@ export default defineConfig({
     },
   },
 
-  // Gzip 压缩
   esbuild: {
     drop: ['console', 'debugger'],
   },
