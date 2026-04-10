@@ -15,11 +15,11 @@
           </router-link>
         </nav>
 
-        <div class="header-actions">
+        <div class="header-actions" v-click-outside="closeMenu">
           <!-- 已登录 -->
           <template v-if="userStore.isLoggedIn">
-            <div class="dropdown dropdown-end">
-              <div tabindex="0" role="button" class="avatar cursor-pointer">
+            <div class="relative">
+              <div role="button" class="avatar cursor-pointer" @click.stop="showMenu = !showMenu">
                 <div class="w-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
                   <img v-if="userStore.userInfo?.avatar" :src="userStore.userInfo.avatar" :alt="userStore.nickname" />
                   <div v-else class="bg-primary text-primary-content w-full h-full flex items-center justify-center text-sm font-bold">
@@ -27,18 +27,21 @@
                   </div>
                 </div>
               </div>
-              <ul tabindex="0" class="dropdown-content z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-200">
-                <li class="menu-title px-4 py-2 text-xs text-neutral/50">
-                  {{ userStore.nickname || userStore.userInfo?.username }}
-                </li>
-                <li><a @click="$router.push('/profile')">个人中心</a></li>
-                <li><a @click="$router.push('/orders')">我的订单</a></li>
-                <li><a @click="$router.push('/coupons')">优惠券</a></li>
-                <li><a @click="$router.push('/notifications')">消息通知</a></li>
-                <li class="border-t border-base-200 mt-1 pt-1">
-                  <a class="text-error" @click="handleLogout">退出登录</a>
-                </li>
-              </ul>
+              <!-- 下拉菜单 -->
+              <Transition name="dropdown">
+                <ul v-if="showMenu" class="absolute right-0 top-full mt-2 z-50 menu p-2 shadow-xl bg-base-100 rounded-box w-52 border border-base-200">
+                  <li class="menu-title px-4 py-2 text-xs text-neutral/50">
+                    {{ userStore.nickname || userStore.userInfo?.username }}
+                  </li>
+                  <li><a @click="navigate('/profile')">个人中心</a></li>
+                  <li><a @click="navigate('/orders')">我的订单</a></li>
+                  <li><a @click="navigate('/coupons')">优惠券</a></li>
+                  <li><a @click="navigate('/notifications')">消息通知</a></li>
+                  <li class="border-t border-base-200 mt-1 pt-1">
+                    <a class="text-error" @click="handleLogout">退出登录</a>
+                  </li>
+                </ul>
+              </Transition>
             </div>
           </template>
 
@@ -76,6 +79,7 @@ import { useRouter } from 'vue-router'
 
 
 const userStore = useUserStore()
+const showMenu = ref(false)
 const router = useRouter()
 
 const navList = [
@@ -87,8 +91,11 @@ const navList = [
   { path: '/coupons', name: '优惠券', icon: '🎫' },
 ]
 
+function closeMenu() { showMenu.value = false }
+function navigate(path: string) { showMenu.value = false; router.push(path) }
 function handleLogout() {
   if (!confirm('确定要退出登录吗？')) return
+  showMenu.value = false
   userStore.logout()
   router.push('/home')
 }
@@ -175,17 +182,11 @@ function handleLogout() {
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
-
-    .user-avatar {
-      cursor: pointer;
-      border-radius: 50%;
-      transition: transform 0.2s;
-
-      &:hover {
-        transform: scale(1.05);
-      }
-    }
+    position: relative;
   }
+
+.dropdown-enter-active, .dropdown-leave-active { transition: all 0.15s ease; }
+.dropdown-enter-from, .dropdown-leave-to { opacity: 0; transform: translateY(-6px); }
 }
 
 .main-content {
