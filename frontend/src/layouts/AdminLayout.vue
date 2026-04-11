@@ -225,6 +225,7 @@ const pageTitleMap: Record<string, string> = {
   '/admin/notifications': '通知管理',
   '/admin/coupons': '优惠券管理',
   '/admin/settings': '系统设置',
+  '/admin/settings/profile': '个人设置',
 }
 const currentRoute = computed(() => route.path)
 const pageTitle = computed(() => pageTitleMap[currentRoute.value] || 'Dashboard')
@@ -246,7 +247,7 @@ const menuItems = [
     icon: Cog6ToothIcon,
     children: [
       { path: '/admin/settings', name: '系统设置', icon: CogIcon },
-      { path: '/admin/settings', name: '个人设置', icon: UsersIcon },
+      { path: '/admin/settings/profile', name: '个人设置', icon: UsersIcon },
     ],
   },
 ]
