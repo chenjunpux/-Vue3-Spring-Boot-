@@ -260,7 +260,7 @@ function openForm(row?: any) {
 
 async function handleSubmit() {
   if (!formData.name || !formData.city) {
-    alert('请填写必填项')
+    window.adminToast('请填写必填项', 'error')
     return
   }
   try {
@@ -274,7 +274,7 @@ async function handleSubmit() {
     modal?.close()
     fetchList()
   } catch (e) {
-    alert('操作失败')
+    window.adminToast('操作失败', 'error')
   } finally {
     submitting.value = false
   }
@@ -288,7 +288,7 @@ async function toggleStatus(row: any) {
     await updateSpotStatus(row.id, newStatus)
     row.status = newStatus
   } catch (e) {
-    alert('操作失败')
+    window.adminToast('操作失败', 'error')
   }
 }
 
@@ -298,7 +298,7 @@ async function handleDelete(row: any) {
     await deleteSpot(row.id)
     fetchList()
   } catch (e) {
-    alert('删除失败')
+    window.adminToast('删除失败', 'error')
   }
 }
 

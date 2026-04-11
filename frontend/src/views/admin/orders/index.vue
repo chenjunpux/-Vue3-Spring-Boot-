@@ -187,7 +187,7 @@ async function handleRefund(row: any) {
     await refundOrder(row.id)
     row.status = 4
   } catch (e) {
-    alert('退款失败')
+    window.adminToast('退款失败', 'error')
   }
 }
 

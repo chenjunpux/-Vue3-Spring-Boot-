@@ -168,17 +168,17 @@ const loginLogs = ref([
   { time: '2026-04-06 18:20:00', ip: '192.168.1.101', location: '北京市', device: 'Safari / macOS' }
 ])
 
-function saveGeneral() { alert('设置已保存') }
+function saveGeneral() { window.adminToast('设置已保存', 'success') }
 function saveTheme() {
   localStorage.setItem('admin-theme-mode', themeSettings.mode)
   localStorage.setItem('admin-primary-color', themeSettings.primaryColor)
-  alert('主题设置已保存')
+  window.adminToast('主题设置已保存', 'success')
 }
 function updatePassword() {
-  if (!securitySettings.currentPassword) { alert('请输入当前密码'); return }
-  if (!securitySettings.newPassword) { alert('请输入新密码'); return }
-  if (securitySettings.newPassword !== securitySettings.confirmPassword) { alert('两次密码不一致'); return }
-  alert('密码修改成功')
+  if (!securitySettings.currentPassword) { window.adminToast('请输入当前密码', 'error'); return }
+  if (!securitySettings.newPassword) { window.adminToast('请输入新密码', 'error'); return }
+  if (securitySettings.newPassword !== securitySettings.confirmPassword) { window.adminToast('两次密码不一致', 'error'); return }
+  window.adminToast('密码修改成功', 'success')
   securitySettings.currentPassword = ''
   securitySettings.newPassword = ''
   securitySettings.confirmPassword = ''

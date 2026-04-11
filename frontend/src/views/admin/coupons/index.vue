@@ -394,19 +394,19 @@ function openForm(row?: Coupon) {
 // ===== 提交表单 =====
 async function handleSubmit() {
   if (!formData.name.trim()) {
-    alert('请输入优惠券名称')
+    window.adminToast('请输入优惠券名称', 'error')
     return
   }
   if (!formData.validStart || !formData.validEnd) {
-    alert('请选择有效期')
+    window.adminToast('请选择有效期', 'error')
     return
   }
   if (formData.discountValue <= 0) {
-    alert('请输入有效的优惠面值')
+    window.adminToast('请输入有效的优惠面值', 'error')
     return
   }
   if (formData.type === 2 && formData.discountValue >= 1) {
-    alert('折扣比例必须小于1，如 0.9 表示九折')
+    window.adminToast('折扣比例必须小于1，如 0.9 表示九折', 'error')
     return
   }
 
@@ -449,7 +449,7 @@ async function toggleStatus(row: Coupon) {
     await couponApi.admin.toggleStatus(row.id)
     row.status = row.status === 1 ? 0 : 1
   } catch {
-    alert('操作失败')
+    window.adminToast('操作失败', 'error')
   }
 }
 
@@ -460,7 +460,7 @@ async function handleDelete(row: Coupon) {
     await couponApi.admin.delete(row.id)
     fetchList()
   } catch {
-    alert('删除失败')
+    window.adminToast('删除失败', 'error')
   }
 }
 

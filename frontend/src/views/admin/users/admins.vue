@@ -436,11 +436,11 @@ function openForm(row?: any) {
 // ===== 提交表单 =====
 async function handleSubmit() {
   if (!formData.username.trim()) {
-    alert('请输入用户名')
+    window.adminToast('请输入用户名', 'error')
     return
   }
   if (!formData.nickname.trim()) {
-    alert('请输入昵称')
+    window.adminToast('请输入昵称', 'error')
     return
   }
   try {
@@ -463,7 +463,7 @@ async function handleSubmit() {
     fetchList()
   } catch (e) {
     console.error(e)
-    alert('操作失败')
+    window.adminToast('操作失败', 'error')
   } finally {
     submitLoading.value = false
   }
@@ -482,9 +482,9 @@ async function savePermissions() {
     await updateMenuPermissions(permTarget.value.id, permSelections.value.join(','))
     permTarget.value.menuPermissions = permSelections.value.join(',')
     getModal('permission_modal')?.close()
-    alert('权限已保存')
+    window.adminToast('权限已保存', 'success')
   } catch {
-    alert('保存失败')
+    window.adminToast('保存失败', 'error')
   }
 }
 
@@ -501,9 +501,9 @@ async function confirmResetPwd() {
     resetting.value = true
     await resetUserPassword(resetPwdTarget.value.id)
     getModal('reset_pwd_modal')?.close()
-    alert(`密码已重置为 123456`)
+    window.adminToast('密码已重置为 123456', 'success')
   } catch {
-    alert('重置失败')
+    window.adminToast('重置失败', 'error')
   } finally {
     resetting.value = false
   }
@@ -525,7 +525,7 @@ async function confirmToggleStatus() {
     toggleTarget.value.status = newStatus
     getModal('toggle_status_modal')?.close()
   } catch {
-    alert('操作失败')
+    window.adminToast('操作失败', 'error')
   } finally {
     toggling.value = false
   }

@@ -296,27 +296,27 @@ function openForm(row?: any) {
 }
 
 async function handleSubmit() {
-  if (!formData.name || !formData.city) { alert('请填写必填项'); return }
+  if (!formData.name || !formData.city) { window.adminToast('请填写必填项', 'error'); return }
   try {
     submitting.value = true
     if (isEdit.value) await updateHotel(formData.id!, formData)
     else await createHotel(formData)
     document.getElementById('hotel_form_modal')?.dispatchEvent(new Event('close'))
     fetchList()
-  } catch { alert('操作失败') } finally { submitting.value = false }
+  } catch { window.adminToast('操作失败', 'error') } finally { submitting.value = false }
 }
 
 async function toggleStatus(row: any) {
   const newStatus = row.status === 1 ? 0 : 1
   if (!confirm(`确定要${newStatus === 1 ? '上架' : '下架'}该酒店吗？`)) return
   try { await updateHotelStatus(row.id, newStatus); row.status = newStatus }
-  catch { alert('操作失败') }
+  catch { window.adminToast('操作失败', 'error') }
 }
 
 async function handleDelete(row: any) {
   if (!confirm(`确定要删除酒店「${row.name}」吗？此操作不可恢复。`)) return
   try { await deleteHotel(row.id); fetchList() }
-  catch { alert('删除失败') }
+  catch { window.adminToast('删除失败', 'error') }
 }
 
 async function openRooms(row: any) {
@@ -331,7 +331,7 @@ async function fetchRooms() {
   try {
     const res: any = await getHotelRooms(currentHotelId.value)
     roomsData.value = res.data || res || []
-  } catch { alert('获取房型失败') }
+  } catch { window.adminToast('获取房型失败', 'error') }
 }
 
 function openRoomForm(row?: any) {
@@ -348,13 +348,13 @@ async function handleRoomSubmit() {
     else await createRoomType(roomForm)
     document.getElementById('room_form_modal')?.dispatchEvent(new Event('close'))
     fetchRooms()
-  } catch { alert('操作失败') }
+  } catch { window.adminToast('操作失败', 'error') }
 }
 
 async function deleteRoom(row: any) {
   if (!confirm('确定要删除该房型吗？')) return
   try { await deleteRoomType(row.id); fetchRooms() }
-  catch { alert('删除失败') }
+  catch { window.adminToast('删除失败', 'error') }
 }
 
 onMounted(() => { fetchList() })

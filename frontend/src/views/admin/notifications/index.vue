@@ -192,7 +192,7 @@ function openForm(row?: AdminNotification) {
 }
 
 async function saveDraft() {
-  if (!formData.title) { alert('请输入标题'); return }
+  if (!formData.title) { window.adminToast('请输入标题', 'error'); return }
   try {
     saving.value = true
     const data: Partial<AdminNotification> = { ...formData, status: 0 }
@@ -201,24 +201,24 @@ async function saveDraft() {
     if (res.code === 200) {
       document.getElementById('notif_form_modal')?.dispatchEvent(new Event('close'))
       fetchList()
-    } else alert(res.msg || '保存失败')
-  } catch { alert('保存失败') } finally { saving.value = false }
+    } else window.adminToast(res.msg || '保存失败', 'error')
+  } catch { window.adminToast('保存失败', 'error') } finally { saving.value = false }
 }
 
 async function sendNotification() {
-  if (!formData.title || !formData.content) { alert('请填写完整信息'); return }
+  if (!formData.title || !formData.content) { window.adminToast('请填写完整信息', 'error'); return }
   try {
     saving.value = true
     if (!isEdit.value || !formData.id) {
       const saveRes = await adminNotificationApi.save({ ...formData, status: 1 } as AdminNotification)
-      if (saveRes.code !== 200) { alert(saveRes.msg || '保存失败'); return }
+      if (saveRes.code !== 200) { window.adminToast(saveRes.msg || '保存失败', 'error'); return }
     } else {
       const res = await adminNotificationApi.publish(formData.id)
-      if (res.code !== 200) { alert(res.msg || '发布失败'); return }
+      if (res.code !== 200) { window.adminToast(res.msg || '发布失败', 'error'); return }
     }
     document.getElementById('notif_form_modal')?.dispatchEvent(new Event('close'))
     fetchList()
-  } catch { alert('操作失败') } finally { saving.value = false }
+  } catch { window.adminToast('操作失败', 'error') } finally { saving.value = false }
 }
 
 async function handlePublish(row: AdminNotification) {
@@ -226,8 +226,8 @@ async function handlePublish(row: AdminNotification) {
   try {
     const res = await adminNotificationApi.publish(row.id!)
     if (res.code === 200) fetchList()
-    else alert(res.msg || '发布失败')
-  } catch { alert('发布失败') }
+    else window.adminToast(res.msg || '发布失败', 'error')
+  } catch { window.adminToast('发布失败', 'error') }
 }
 
 async function handleDelete(row: AdminNotification) {
@@ -235,8 +235,8 @@ async function handleDelete(row: AdminNotification) {
   try {
     const res = await adminNotificationApi.delete(row.id!)
     if (res.code === 200) fetchList()
-    else alert(res.msg || '删除失败')
-  } catch { alert('删除失败') }
+    else window.adminToast(res.msg || '删除失败', 'error')
+  } catch { window.adminToast('删除失败', 'error') }
 }
 
 onMounted(() => { fetchList() })

@@ -147,13 +147,13 @@ function showDetail(row: any) {
 async function audit(row: any, status: number) {
   if (!confirm(`确定要${status === 1 ? '通过' : '拒绝'}该游记吗？`)) return
   try { await updateArticleStatus(row.id, status); fetchList() }
-  catch { alert('操作失败') }
+  catch { window.adminToast('操作失败', 'error') }
 }
 
 async function toggleTop(row: any) {
   if (!confirm(`确定要${row.isTop ? '取消置顶' : '置顶'}该游记吗？`)) return
   try { await toggleArticleTop(row.id); fetchList() }
-  catch { alert('操作失败') }
+  catch { window.adminToast('操作失败', 'error') }
 }
 
 onMounted(() => { fetchList() })

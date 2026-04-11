@@ -161,10 +161,18 @@
       </div>
     </div>
   </div>
+
+  <!-- ========== 全局 Toast 通知 ========== -->
+  <div class="toast toast-end z-[100]" style="pointer-events: none">
+    <div v-if="toast.show" :class="toast.class" class="alert shadow-lg pointer-events-auto"
+      style="min-width: 220px">
+      <span>{{ toast.message }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { notificationApi } from '@/api/notification'
@@ -207,6 +215,27 @@ const isDark = ref(false)
 const showNotifications = ref(false)
 const notifications = ref<any[]>([])
 const unreadCount = ref(0)
+
+// ===== 全局 Toast =====
+const toast = reactive({ show: false, message: '', class: 'alert-success' })
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') {
+  const clsMap = {
+    success: 'alert-success',
+    error: 'alert-error',
+    warning: 'alert-warning',
+    info: 'alert-info',
+  }
+  toast.message = message
+  toast.class = clsMap[type]
+  toast.show = true
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toast.show = false }, 3000)
+}
+
+// 挂到 window，方便子页面调用
+;(window as any).adminToast = showToast
 
 // ===== 用户信息 =====
 const nickname = computed(() => userStore.userInfo?.nickname || '管理员')

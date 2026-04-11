@@ -253,7 +253,7 @@ async function handleRefund(row: PaymentVO) {
   try {
     await refundPayment(row.id)
     row.payStatus = 3
-  } catch { alert('退款失败') }
+  } catch { window.adminToast('退款失败', 'error') }
 }
 
 async function exportData() {
@@ -278,7 +278,7 @@ async function exportData() {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-  } catch { alert('导出失败') }
+  } catch { window.adminToast('导出失败', 'error') }
 }
 
 onMounted(() => { fetchList() })

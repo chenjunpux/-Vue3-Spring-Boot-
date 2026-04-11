@@ -229,9 +229,9 @@ async function confirmResetPwd() {
     await resetUserPassword(resetPwdTarget.value.id)
     const modal = document.getElementById('reset_pwd_modal') as HTMLDialogElement
     modal?.close()
-    alert(`密码已重置为 123456`)
+    window.adminToast('密码已重置为 123456', 'success')
   } catch {
-    alert('重置失败')
+    window.adminToast('重置失败', 'error')
   } finally {
     resetting.value = false
   }
@@ -251,7 +251,7 @@ async function toggleStatus(row: any) {
     await updateUserStatus(row.id, newStatus)
     row.status = newStatus
   } catch (e) {
-    alert('操作失败')
+    window.adminToast('操作失败', 'error')
   }
 }
 
