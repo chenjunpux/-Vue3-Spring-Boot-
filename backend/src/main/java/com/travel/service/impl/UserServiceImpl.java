@@ -140,4 +140,14 @@ public class UserServiceImpl implements UserService {
             userMapper.updateById(user);
         }
     }
+
+    @Override
+    public void resetPassword(Long id) {
+        User user = userMapper.selectById(id);
+        if (user != null) {
+            user.setPassword(passwordEncoder.encode("123456"));
+            user.setUpdatedAt(LocalDateTime.now());
+            userMapper.updateById(user);
+        }
+    }
 }

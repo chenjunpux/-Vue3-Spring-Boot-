@@ -74,8 +74,9 @@
               </td>
               <td>{{ formatDate(row.createdAt) }}</td>
               <td>
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 flex-wrap">
                   <button class="btn btn-primary btn-xs" @click="showDetail(row)">详情</button>
+                  <button class="btn btn-warning btn-xs" @click="handleResetPassword(row)">重置密码</button>
                   <button
                     :class="row.status === 1 ? 'btn-error' : 'btn-success'"
                     class="btn btn-xs"
@@ -138,7 +139,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getAdminUserList, updateUserStatus } from '@/api/admin'
+import { getAdminUserList, updateUserStatus, resetUserPassword } from '@/api/admin'
 import dayjs from 'dayjs'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 
@@ -151,7 +152,6 @@ const pageSize = ref(10)
 const total = ref(0)
 const totalPages = computed(() => Math.ceil(total.value / pageSize.value) || 1)
 
-const detailVisible = ref(false)
 const currentUser = ref<any>(null)
 
 function formatDate(dateStr: string) {
@@ -167,12 +167,24 @@ async function fetchList() {
       keyword: keyword.value || undefined,
       status: statusFilter.value !== '' ? Number(statusFilter.value) : undefined,
     })
-    tableData.value = res.data?.records || res.records || []
-    total.value = res.data?.total || res.total || 0
+    const allUsers = res.data?.records || res.records || []
+    // 只显示普通用户（role !== 2）
+    tableData.value = allUsers.filter((u: any) => u.role !== 2)
+    total.value = tableData.value.length
   } catch (e) {
     console.error('获取列表失败', e)
   } finally {
     loading.value = false
+  }
+}
+
+async function handleResetPassword(row: any) {
+  if (!confirm(`确定要将用户「${row.nickname || row.id}」的密码重置为 123456 吗？`)) return
+  try {
+    await resetUserPassword(row.id)
+    alert(`密码已重置为 123456`)
+  } catch {
+    alert('重置失败')
   }
 }
 

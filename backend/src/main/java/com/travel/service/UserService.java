@@ -14,4 +14,5 @@ public interface UserService {
     void updateAvatar(Long id, String avatar);
     void updateProfile(Long id, User user);
     void updateMenuPermissions(Long id, String permissions);
+    void resetPassword(Long id);
 }

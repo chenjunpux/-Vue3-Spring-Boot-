@@ -65,6 +65,14 @@ public class UserController {
         return Result.ok();
     }
 
+    // ==================== 重置密码 ====================
+    // 重置为默认密码 123456
+    @PutMapping("/admin/{id}/reset-password")
+    public Result<Void> resetPassword(@PathVariable Long id) {
+        userService.resetPassword(id);
+        return Result.ok();
+    }
+
     // ==================== 个人中心 ====================
 
     @GetMapping("/profile")
