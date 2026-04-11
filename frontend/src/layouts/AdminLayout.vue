@@ -237,7 +237,7 @@ const menuItems = [
   { path: '/admin/dashboard', name: 'Dashboard', icon: HomeIcon },
   { path: '/admin/orders', name: '订单管理', icon: DocumentTextIcon },
   { path: '/admin/users', name: '用户管理', icon: UsersIcon },
-  { path: '/admin/users/admins', name: '管理员管理', icon: ShieldBadgeIcon },
+  { path: '/admin/users/admins', name: '管理员管理', icon: ShieldCheckIcon },
   { path: '/admin/spots', name: '景点管理', icon: MapPinIcon },
   { path: '/admin/hotels', name: '酒店管理', icon: BuildingOfficeIcon },
   { path: '/admin/articles', name: '游记管理', icon: BookOpenIcon },

@@ -242,6 +242,41 @@
       </div>
       <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
+
+    <!-- ========== 重置密码确认 Modal ========== -->
+    <dialog id="reset_pwd_modal" class="modal">
+      <div class="modal-box max-w-sm">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <div class="flex flex-col items-center text-center pt-4">
+          <div class="text-warning mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a5 5 0 01-7.646 7.646l-1.041-1.041A3 3 0 1110 11H3a3 3 0 013-3z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2M3 7h2a2 2 0 012 2v2a2 2 0 01-2 2H3M3 9v6a2 2 0 002 2h2" />
+            </svg>
+          </div>
+          <h3 class="font-bold text-lg mb-2">确认重置密码</h3>
+          <p class="text-sm text-neutral/70 mb-1">
+            确定要将管理员
+          </p>
+          <p class="font-semibold text-base mb-1">
+            「{{ resetPwdTarget?.nickname || resetPwdTarget?.username }}」
+          </p>
+          <p class="text-sm text-neutral/70 mb-5">
+            的密码重置为 <span class="font-bold text-error">123456</span> 吗？
+          </p>
+          <div class="flex gap-3 w-full">
+            <form method="dialog" class="flex-1"><button class="btn btn-ghost w-full">取消</button></form>
+            <button class="btn btn-warning flex-1" :class="{ 'btn-disabled': resetting }" @click="confirmResetPwd">
+              <span v-if="resetting" class="loading loading-spinner loading-xs"></span>
+              {{ resetting ? '重置中...' : '确认重置' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
   </div>
 </template>
 
@@ -294,6 +329,8 @@ const formData = reactive({
 
 // ===== 详情 =====
 const currentAdmin = ref<any>(null)
+const resetPwdTarget = ref<any>(null)
+const resetting = ref(false)
 
 // ===== 辅助方法 =====
 function formatDate(d: string) {
@@ -416,13 +453,23 @@ async function savePermissions() {
 }
 
 // ===== 重置密码 =====
-async function handleResetPassword(row: any) {
-  if (!confirm(`确定要将管理员「${row.nickname || row.username}」的密码重置为 123456 吗？`)) return
+function handleResetPassword(row: any) {
+  resetPwdTarget.value = row
+  resetting.value = false
+  getModal('reset_pwd_modal')?.showModal()
+}
+
+async function confirmResetPwd() {
+  if (!resetPwdTarget.value) return
   try {
-    await resetUserPassword(row.id)
-    alert('密码已重置为 123456')
+    resetting.value = true
+    await resetUserPassword(resetPwdTarget.value.id)
+    getModal('reset_pwd_modal')?.close()
+    alert(`密码已重置为 123456`)
   } catch {
     alert('重置失败')
+  } finally {
+    resetting.value = false
   }
 }
 
