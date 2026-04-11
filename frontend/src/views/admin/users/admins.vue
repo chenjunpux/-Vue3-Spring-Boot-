@@ -277,6 +277,40 @@
       </div>
       <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
+
+    <!-- ========== 切换状态确认 Modal ========== -->
+    <dialog id="toggle_status_modal" class="modal">
+      <div class="modal-box max-w-sm">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <div class="flex flex-col items-center text-center pt-4">
+          <div :class="toggleTarget?.status === 1 ? 'text-error' : 'text-success'" class="mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path v-if="toggleTarget?.status === 1" stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              <path v-else stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="font-bold text-lg mb-2">
+            {{ toggleTarget?.status === 1 ? '确认禁用' : '确认启用' }}管理员
+          </h3>
+          <p class="font-semibold text-base mb-5">
+            「{{ toggleTarget?.nickname || toggleTarget?.username }}」
+          </p>
+          <p class="text-sm text-neutral/70 mb-5">
+            {{ toggleTarget?.status === 1 ? '禁用后该管理员将无法登录系统' : '启用后该管理员可正常登录系统' }}
+          </p>
+          <div class="flex gap-3 w-full">
+            <form method="dialog" class="flex-1"><button class="btn btn-ghost w-full">取消</button></form>
+            <button class="btn flex-1" :class="[toggleTarget?.status === 1 ? 'btn-error' : 'btn-success', { 'btn-disabled': toggling }]" @click="confirmToggleStatus">
+              <span v-if="toggling" class="loading loading-spinner loading-xs"></span>
+              {{ toggling ? '处理中...' : (toggleTarget?.status === 1 ? '确认禁用' : '确认启用') }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
   </div>
 </template>
 
@@ -331,6 +365,8 @@ const formData = reactive({
 const currentAdmin = ref<any>(null)
 const resetPwdTarget = ref<any>(null)
 const resetting = ref(false)
+const toggleTarget = ref<any>(null)
+const toggling = ref(false)
 
 // ===== 辅助方法 =====
 function formatDate(d: string) {
@@ -474,15 +510,24 @@ async function confirmResetPwd() {
 }
 
 // ===== 切换状态 =====
-async function toggleStatus(row: any) {
-  const action = row.status === 1 ? '禁用' : '启用'
-  if (!confirm(`确定要${action}管理员「${row.nickname || row.username}」吗？`)) return
+function toggleStatus(row: any) {
+  toggleTarget.value = row
+  toggling.value = false
+  getModal('toggle_status_modal')?.showModal()
+}
+
+async function confirmToggleStatus() {
+  if (!toggleTarget.value) return
   try {
-    const newStatus = row.status === 1 ? 0 : 1
-    await updateUserStatus(row.id, newStatus)
-    row.status = newStatus
+    toggling.value = true
+    const newStatus = toggleTarget.value.status === 1 ? 0 : 1
+    await updateUserStatus(toggleTarget.value.id, newStatus)
+    toggleTarget.value.status = newStatus
+    getModal('toggle_status_modal')?.close()
   } catch {
     alert('操作失败')
+  } finally {
+    toggling.value = false
   }
 }
 
