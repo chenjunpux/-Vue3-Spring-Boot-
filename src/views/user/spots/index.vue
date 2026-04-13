@@ -81,8 +81,9 @@
         v-model:current-page="currentPage"
         :page-size="pageSize"
         :total="total"
-        layout="prev, pager, next"
+        layout="total, prev, pager, next"
         @current-change="loadList"
+        background
       />
     </div>
   </div>
@@ -103,7 +104,7 @@ const loading = ref(false)
 const list = ref<any[]>([])
 const total = ref(0)
 const currentPage = ref(1)
-const pageSize = 12
+const pageSize = 16
 
 // Refs
 const spotsHeroRef = ref<HTMLElement | null>(null)

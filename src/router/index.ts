@@ -164,6 +164,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '用户管理' },
       },
       {
+        path: '/admin/users/admins',
+        name: 'AdminStaff',
+        component: () => import('@/views/admin/users/admins.vue'),
+        meta: { title: '管理员管理' },
+      },
+      {
         path: '/admin/articles',
         name: 'AdminArticles',
         component: () => import('@/views/admin/articles/index.vue'),
@@ -192,6 +198,12 @@ const routes: RouteRecordRaw[] = [
         name: 'AdminSettings',
         component: () => import('@/views/admin/settings/index.vue'),
         meta: { title: '系统设置' },
+      },
+      {
+        path: '/admin/settings/profile',
+        name: 'AdminSettingsProfile',
+        component: () => import('@/views/admin/settings/profile.vue'),
+        meta: { title: '个人设置' },
       },
     ],
   },

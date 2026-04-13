@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==================== 全局基础样式 ==================== */
+@layer base {
+  html {
+    @apply scroll-smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply font-sans text-neutral antialiased;
+    @apply bg-base-200;
+  }
+
+  /* 全局去掉 section 圆角 */
+  section {
+    border-radius: unset !important;
+  }
+}
+
+/* ==================== 自定义组件样式 ==================== */
+@layer components {
+  /* 管理后台页面容器 */
+  .admin-page {
+    @apply max-w-7xl mx-auto p-4 md:p-6;
+  }
+
+  /* 管理卡片 */
+  .admin-card {
+    @apply bg-base-100 rounded-lg shadow border border-base-300 overflow-hidden;
+  }
+
+  /* 卡片头部 */
+  .admin-card-header {
+    @apply flex items-center justify-between flex-wrap gap-3 p-4 border-b border-base-300;
+  }
+
+  /* 搜索框 */
+  .admin-search {
+    @apply w-60;
+  }
+  .admin-search.wide {
+    @apply w-96;
+  }
+
+  /* 表格相关 */
+  .admin-table {
+    @apply w-full text-sm;
+  }
+  .admin-table thead th {
+    @apply bg-base-200 text-neutral font-semibold;
+  }
+  .admin-table tbody tr:hover {
+    @apply bg-base-200/50;
+  }
+
+  /* 页面标题 */
+  .page-title {
+    @apply text-xl font-bold text-neutral mb-4;
+  }
+
+  /* 空状态 */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 text-neutral/50;
+  }
+}
+
+/* ==================== 暗色主题适配 ==================== */
+[data-theme="dark"] {
+  .admin-card {
+    @apply bg-base-100 border-base-300;
+  }
+  .admin-card-header {
+    @apply border-base-300;
+  }
+}

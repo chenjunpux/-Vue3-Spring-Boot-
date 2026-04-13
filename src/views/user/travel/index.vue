@@ -702,7 +702,7 @@ onUnmounted(() => {
   height: 100vh;
   display: flex;
   align-items: center;
-  justify-content: center;
+  width: 100%;
   background: linear-gradient(135deg, #0f0f23 0%, #1e1b4b 40%, #312e81 70%, #1e1b4b 100%);
   overflow: hidden;
 
@@ -725,11 +725,13 @@ onUnmounted(() => {
 
   .hero-content {
     position: relative;
+    display: block;
     z-index: 2;
     text-align: center;
-    padding: 0 24px;
+    padding: 0 clamp(16px, 4vw, 48px);
     width: 100%;
-    max-width: 900px;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .hero-eyebrow {
@@ -793,6 +795,8 @@ onUnmounted(() => {
       align-items: center;
       flex-wrap: wrap;
       justify-content: center;
+      max-width: 900px;
+      margin: 0 auto;
 
       .input-group {
         display: flex;
@@ -804,8 +808,8 @@ onUnmounted(() => {
         padding: 0 16px;
         height: 48px;
         flex: 1;
-        min-width: 180px;
-        max-width: 240px;
+        min-width: 160px;
+        max-width: 220px;
         transition: border-color 0.2s;
 
         &:focus-within { border-color: rgba(102,126,234,0.6); }
@@ -855,6 +859,7 @@ onUnmounted(() => {
   padding: 100px 24px;
   max-width: 1280px;
   margin: 0 auto;
+  border-radius: 0 !important;
 }
 
 .sec-head {

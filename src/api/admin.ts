@@ -193,6 +193,10 @@ export function updateMenuPermissions(id: number, permissions: string) {
   return request.put(`/user/admin/${id}/menu-permissions`, { permissions })
 }
 
+export function resetUserPassword(id: number) {
+  return request.put(`/user/admin/${id}/reset-password`)
+}
+
 // ==================== 支付管理 ====================
 export interface PaymentVO {
   id: number

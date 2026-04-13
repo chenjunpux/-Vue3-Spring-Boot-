@@ -1,115 +1,140 @@
 <template>
   <div class="admin-page">
-    <el-tabs v-model="activeTab" class="settings-tabs">
-      <!-- 基本设置 -->
-      <el-tab-pane label="基本设置" name="general">
-        <div class="admin-card settings-card">
-          <h3>系统基本设置</h3>
-          <el-form :model="generalSettings" label-width="120px">
-            <el-form-item label="系统名称">
-              <el-input v-model="generalSettings.systemName" placeholder="智慧旅游管理系统" />
-            </el-form-item>
-            <el-form-item label="系统Logo">
-              <el-input v-model="generalSettings.logo" placeholder="Logo URL" />
-            </el-form-item>
-            <el-form-item label="系统描述">
-              <el-input v-model="generalSettings.description" type="textarea" :rows="3" placeholder="系统描述" />
-            </el-form-item>
-            <el-form-item label="联系邮箱">
-              <el-input v-model="generalSettings.email" placeholder="admin@example.com" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="saveGeneral">保存设置</el-button>
-            </el-form-item>
-          </el-form>
+    <div role="tablist" class="tabs tabs-lifted mb-4">
+      <input type="radio" name="settings_tabs" role="tab" class="tab" aria-label="基本设置"
+        :checked="activeTab === 'general'" @click="activeTab = 'general'" />
+      <div role="tabpanel" class="tab-content bg-base-100 border-base-200 rounded-box p-6">
+        <div v-if="activeTab === 'general'">
+          <h3 class="font-semibold text-lg mb-4 pb-2 border-b border-base-300">系统基本设置</h3>
+          <div class="space-y-4 max-w-2xl">
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">系统名称</span></div>
+              <input v-model="generalSettings.systemName" class="input input-bordered w-full"
+                placeholder="智慧旅游管理系统" />
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">系统Logo</span></div>
+              <input v-model="generalSettings.logo" class="input input-bordered w-full" placeholder="Logo URL" />
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">系统描述</span></div>
+              <textarea v-model="generalSettings.description" class="textarea textarea-bordered w-full"
+                rows="3" placeholder="系统描述"></textarea>
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">联系邮箱</span></div>
+              <input v-model="generalSettings.email" class="input input-bordered w-full"
+                placeholder="admin@example.com" type="email" />
+            </label>
+            <button class="btn btn-primary" @click="saveGeneral">保存设置</button>
+          </div>
         </div>
-      </el-tab-pane>
+      </div>
 
-      <!-- 主题设置 -->
-      <el-tab-pane label="主题设置" name="theme">
-        <div class="admin-card settings-card">
-          <h3>界面主题</h3>
-          <el-form label-width="120px">
-            <el-form-item label="主题模式">
-              <el-radio-group v-model="themeSettings.mode">
-                <el-radio label="light">亮色模式</el-radio>
-                <el-radio label="dark">暗色模式</el-radio>
-                <el-radio label="auto">跟随系统</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="主题颜色">
-              <div class="color-options">
-                <div
-                  v-for="color in colorOptions"
-                  :key="color.value"
-                  class="color-item"
-                  :class="{ active: themeSettings.primaryColor === color.value }"
-                  :style="{ background: color.value }"
-                  @click="themeSettings.primaryColor = color.value"
-                >
-                  <i v-if="themeSettings.primaryColor === color.value" class="i-mdi-check"></i>
-                </div>
+      <input type="radio" name="settings_tabs" role="tab" class="tab" aria-label="主题设置"
+        :checked="activeTab === 'theme'" @click="activeTab = 'theme'" />
+      <div role="tabpanel" class="tab-content bg-base-100 border-base-200 rounded-box p-6">
+        <div v-if="activeTab === 'theme'">
+          <h3 class="font-semibold text-lg mb-4 pb-2 border-b border-base-300">界面主题</h3>
+          <div class="space-y-6 max-w-2xl">
+            <div>
+              <div class="label"><span class="label-text font-semibold">主题模式</span></div>
+              <div class="flex gap-4 flex-wrap">
+                <label class="label cursor-pointer gap-2">
+                  <input v-model="themeSettings.mode" type="radio" value="light" class="radio radio-sm" />
+                  <span>亮色模式</span>
+                </label>
+                <label class="label cursor-pointer gap-2">
+                  <input v-model="themeSettings.mode" type="radio" value="dark" class="radio radio-sm" />
+                  <span>暗色模式</span>
+                </label>
+                <label class="label cursor-pointer gap-2">
+                  <input v-model="themeSettings.mode" type="radio" value="auto" class="radio radio-sm" />
+                  <span>跟随系统</span>
+                </label>
               </div>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="saveTheme">保存设置</el-button>
-            </el-form-item>
-          </el-form>
+            </div>
+            <div>
+              <div class="label"><span class="label-text font-semibold">主题颜色</span></div>
+              <div class="flex gap-3 flex-wrap">
+                <button v-for="c in colorOptions" :key="c.value"
+                  class="btn btn-circle" :style="{ background: c.value, border: themeSettings.primaryColor === c.value ? '3px solid #000' : 'none' }"
+                  @click="themeSettings.primaryColor = c.value">
+                  <span v-if="themeSettings.primaryColor === c.value" class="text-white">
+                    <i class="i-mdi-check text-sm"></i>
+                  </span>
+                </button>
+              </div>
+            </div>
+            <button class="btn btn-primary" @click="saveTheme">保存设置</button>
+          </div>
         </div>
-      </el-tab-pane>
+      </div>
 
-      <!-- 安全设置 -->
-      <el-tab-pane label="安全设置" name="security">
-        <div class="admin-card settings-card">
-          <h3>账户安全</h3>
-          <el-form label-width="120px">
-            <el-form-item label="当前密码">
-              <el-input type="password" v-model="securitySettings.currentPassword" placeholder="请输入当前密码" show-password />
-            </el-form-item>
-            <el-form-item label="新密码">
-              <el-input type="password" v-model="securitySettings.newPassword" placeholder="请输入新密码" show-password />
-            </el-form-item>
-            <el-form-item label="确认密码">
-              <el-input type="password" v-model="securitySettings.confirmPassword" placeholder="请确认新密码" show-password />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="updatePassword">修改密码</el-button>
-            </el-form-item>
-          </el-form>
-        </div>
+      <input type="radio" name="settings_tabs" role="tab" class="tab" aria-label="安全设置"
+        :checked="activeTab === 'security'" @click="activeTab = 'security'" />
+      <div role="tabpanel" class="tab-content bg-base-100 border-base-200 rounded-box p-6">
+        <div v-if="activeTab === 'security'">
+          <h3 class="font-semibold text-lg mb-4 pb-2 border-b border-base-300">账户安全</h3>
+          <div class="space-y-4 max-w-2xl">
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">当前密码</span></div>
+              <input v-model="securitySettings.currentPassword" type="password" class="input input-bordered w-full"
+                placeholder="请输入当前密码" />
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">新密码</span></div>
+              <input v-model="securitySettings.newPassword" type="password" class="input input-bordered w-full"
+                placeholder="请输入新密码" />
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">确认密码</span></div>
+              <input v-model="securitySettings.confirmPassword" type="password" class="input input-bordered w-full"
+                placeholder="请确认新密码" />
+            </label>
+            <button class="btn btn-primary" @click="updatePassword">修改密码</button>
+          </div>
 
-        <div class="admin-card settings-card mt-4">
-          <h3>登录日志</h3>
-          <el-table :data="loginLogs" stripe size="small">
-            <el-table-column prop="time" label="登录时间" width="180" />
-            <el-table-column prop="ip" label="IP地址" width="150" />
-            <el-table-column prop="location" label="登录地点" />
-            <el-table-column prop="device" label="设备" />
-          </el-table>
+          <h3 class="font-semibold text-lg mt-8 mb-4 pb-2 border-b border-base-300">登录日志</h3>
+          <div class="overflow-x-auto">
+            <table class="table table-zebra w-full text-sm">
+              <thead><tr><th>登录时间</th><th>IP地址</th><th>登录地点</th><th>设备</th></tr></thead>
+              <tbody>
+                <tr v-for="log in loginLogs" :key="log.time">
+                  <td>{{ log.time }}</td><td class="font-mono">{{ log.ip }}</td>
+                  <td>{{ log.location }}</td><td>{{ log.device }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </el-tab-pane>
+      </div>
 
-      <!-- 系统信息 -->
-      <el-tab-pane label="系统信息" name="about">
-        <div class="admin-card settings-card">
-          <h3>关于系统</h3>
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="系统名称">智慧旅游管理系统</el-descriptions-item>
-            <el-descriptions-item label="版本号">v1.0.0</el-descriptions-item>
-            <el-descriptions-item label="技术栈">Vue3 + TypeScript + Element Plus</el-descriptions-item>
-            <el-descriptions-item label="前端框架">Vite + UnoCSS</el-descriptions-item>
-            <el-descriptions-item label="图表库">ECharts 5</el-descriptions-item>
-            <el-descriptions-item label="构建时间">2026-04-07</el-descriptions-item>
-          </el-descriptions>
+      <input type="radio" name="settings_tabs" role="tab" class="tab" aria-label="系统信息"
+        :checked="activeTab === 'about'" @click="activeTab = 'about'" />
+      <div role="tabpanel" class="tab-content bg-base-100 border-base-200 rounded-box p-6">
+        <div v-if="activeTab === 'about'">
+          <h3 class="font-semibold text-lg mb-4 pb-2 border-b border-base-300">关于系统</h3>
+          <div class="max-w-2xl">
+            <table class="table w-full text-sm">
+              <tbody>
+                <tr><td class="font-semibold w-32">系统名称</td><td>智慧旅游管理系统</td></tr>
+                <tr><td class="font-semibold">版本号</td><td>v1.0.0</td></tr>
+                <tr><td class="font-semibold">技术栈</td><td>Vue3 + TypeScript + Tailwind + DaisyUI</td></tr>
+                <tr><td class="font-semibold">前端框架</td><td>Vite 5</td></tr>
+                <tr><td class="font-semibold">图表库</td><td>ECharts 5</td></tr>
+                <tr><td class="font-semibold">构建时间</td><td>2026-04-10</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </el-tab-pane>
-    </el-tabs>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
 
 const activeTab = ref('general')
 
@@ -135,9 +160,7 @@ const colorOptions = [
 ]
 
 const securitySettings = reactive({
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: ''
+  currentPassword: '', newPassword: '', confirmPassword: ''
 })
 
 const loginLogs = ref([
@@ -145,80 +168,19 @@ const loginLogs = ref([
   { time: '2026-04-06 18:20:00', ip: '192.168.1.101', location: '北京市', device: 'Safari / macOS' }
 ])
 
-function saveGeneral() {
-  ElMessage.success('设置已保存')
-}
-
+function saveGeneral() { window.adminToast('设置已保存', 'success') }
 function saveTheme() {
   localStorage.setItem('admin-theme-mode', themeSettings.mode)
   localStorage.setItem('admin-primary-color', themeSettings.primaryColor)
-  ElMessage.success('主题设置已保存')
+  window.adminToast('主题设置已保存', 'success')
 }
-
 function updatePassword() {
-  if (!securitySettings.currentPassword) return ElMessage.warning('请输入当前密码')
-  if (!securitySettings.newPassword) return ElMessage.warning('请输入新密码')
-  if (securitySettings.newPassword !== securitySettings.confirmPassword) return ElMessage.warning('两次密码不一致')
-  ElMessage.success('密码修改成功')
+  if (!securitySettings.currentPassword) { window.adminToast('请输入当前密码', 'error'); return }
+  if (!securitySettings.newPassword) { window.adminToast('请输入新密码', 'error'); return }
+  if (securitySettings.newPassword !== securitySettings.confirmPassword) { window.adminToast('两次密码不一致', 'error'); return }
+  window.adminToast('密码修改成功', 'success')
   securitySettings.currentPassword = ''
   securitySettings.newPassword = ''
   securitySettings.confirmPassword = ''
 }
 </script>
-
-<style scoped lang="scss">
-.settings-tabs {
-  :deep(.el-tabs__header) {
-    background: #fff;
-    border-radius: 12px;
-    padding: 8px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  }
-
-  .dark :deep(.el-tabs__header) {
-    background: #1f2937;
-  }
-}
-
-.settings-card {
-  padding: 24px;
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .dark & h3 {
-    border-color: #374151;
-  }
-}
-
-.color-options {
-  display: flex;
-  gap: 12px;
-}
-
-.color-item {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  transition: transform 0.2s;
-
-  &:hover {
-    transform: scale(1.1);
-  }
-
-  &.active {
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2);
-  }
-}
-</style>

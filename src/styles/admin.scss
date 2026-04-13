@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 // =============================================
 // 管理后台页面通用样式
 // 所有管理页面统一使用这些类名和样式
@@ -7,6 +11,12 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 0;
+}
+
+.mt-4{
+  display: flex;
+  justify-content: space-between;
+  align-items: center
 }
 
 /* 数据卡片 */
@@ -327,4 +337,30 @@
   margin-bottom: 16px;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+// =============================================
+// AdminLayout DaisyUI 样式覆盖
+// =============================================
+
+/* 路由激活指示器（与 DaisyUI 模板一致） */
+.router-link-exact-active,
+.router-link-active {
+  @apply font-semibold bg-base-200 relative;
+}
+
+.router-link-exact-active::before,
+.router-link-active::before {
+  content: '';
+  @apply absolute inset-y-0 left-0 w-1 rounded-tr-md rounded-br-md bg-primary;
+}
+
+/* 路由过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }

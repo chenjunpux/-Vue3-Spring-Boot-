@@ -43,7 +43,7 @@
     </section>
 
     <!-- ── Stats ── -->
-    <section class="stats" ref="statsRef">
+    <section class="stats rounded-none" ref="statsRef" style="border-radius: 0 !important;">
       <div class="stats-row">
         <div v-for="s in stats" :key="s.label" class="stat-cell" :ref="el => el && statCellsRef.push(el as HTMLElement)">
           <div class="stat-n" :ref="el => el && statNumRefs.push(el as HTMLElement)" :data-target="s.v.replace(/,/g,'')" :data-suffix="s.s">{{ s.v }}<small>{{ s.s }}</small></div>
@@ -542,7 +542,7 @@ onUnmounted(() => {
 
 <style scoped>
 /* ── Reset ── */
-.home { width: 100%; }
+.home { width: 100%; overflow-x: hidden; }
 
 /* GSAP 动画初始状态 */
 .gsap-card {
@@ -617,11 +617,12 @@ onUnmounted(() => {
 .hero-search {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 24px;
 }
 .hero-search input {
-  width: 360px; height: 52px; padding: 0 20px;
+  max-width: 360px; width: calc(100% - 120px); min-width: 200px; height: 52px; padding: 0 20px;
   background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.2);
   border-radius: 26px; color: white; font-size: 15px; outline: none;
   backdrop-filter: blur(20px); transition: all 0.3s;
@@ -683,37 +684,49 @@ onUnmounted(() => {
 }
 
 /* ── Stats ── */
-.stats { background: #0f0f23; padding: 80px 60px; }
+.stats { background: #0f0f23; width: 100%; padding: 80px 60px; border-radius: 0 !important; overflow: hidden !important; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%) !important; }
 .stats-row {
-  max-width: 1200px; margin: 0 auto;
-  display: flex; justify-content: space-around; gap: 40px;
+  width: 100%;
+  border-radius: 0 !important;
+  display: flex; justify-content: space-around; gap: clamp(16px, 3vw, 40px);
+  flex-wrap: wrap;
 }
-.stat-cell { text-align: center; will-change: transform, opacity; }
-.stat-n { font-size: 48px; font-weight: 900; color: white; }
-.stat-n small { font-size: 24px; color: #667eea; }
-.stat-l { font-size: 14px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-top: 8px; }
+.stat-cell { text-align: center; will-change: transform, opacity; flex: 1; min-width: 160px; }
+.stat-n { font-size: clamp(32px, 5vw, 56px); font-weight: 900; color: white; line-height: 1.1; }
+.stat-n small { font-size: clamp(16px, 2.5vw, 28px); color: #667eea; }
+.stat-l { font-size: clamp(11px, 1.5vw, 14px); color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-top: 8px; word-break: break-all; }
+
+/* ── Stats Responsive ── */
+@media (max-width: 768px) {
+  .stats-row { flex-direction: column; align-items: center; gap: 24px; }
+  .stat-cell { width: 100%; max-width: 280px; }
+  .stat-n { font-size: 36px; }
+}
+@media (max-width: 480px) {
+  .stat-cell { max-width: 100%; }
+}
 
 /* ── Section Common ── */
-.sec-head { text-align: center; margin-bottom: 60px; }
-.sec-label { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 16px; font-size: 13px; color: #667eea; text-transform: uppercase; letter-spacing: 3px; font-weight: 700; }
-.sec-head h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 900; color: #1e293b; margin-bottom: 12px; }
-.sec-head p { font-size: 16px; color: #94a3b8; }
+.sec-head { text-align: center; margin-bottom: clamp(32px, 5vw, 60px); padding: 0 16px; }
+.sec-label { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 16px; font-size: clamp(11px, 1.5vw, 13px); color: #667eea; text-transform: uppercase; letter-spacing: 3px; font-weight: 700; }
+.sec-head h2 { font-size: clamp(24px, 4vw, 44px); font-weight: 900; color: #1e293b; margin-bottom: 12px; }
+.sec-head p { font-size: clamp(13px, 1.8vw, 16px); color: #94a3b8; }
 
 /* ── Spots ── */
-.spots { padding: 100px 60px; background: #f8fafc; }
+.spots { padding: clamp(60px, 8vw, 100px) clamp(16px, 4vw, 60px); background: #f8fafc; }
 .spots-row {
   max-width: 1280px; margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: clamp(16px, 2vw, 24px);
 }
 .spot-card {
   border-radius: 20px; overflow: hidden; background: white;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
 }
 .spot-card:hover { transform: translateY(-8px); box-shadow: 0 20px 60px rgba(0,0,0,0.14); }
-.spot-img { position: relative; height: 200px; overflow: hidden; }
-.spot-img img { width: 100%; height: 200px; object-fit: cover; display: block; transition: transform 0.5s; }
+.spot-img { position: relative; height: clamp(140px, 20vw, 200px); overflow: hidden; }
+.spot-img img { width: 100%; height: clamp(140px, 20vw, 200px); object-fit: cover; display: block; transition: transform 0.5s; }
 .spot-card:hover .spot-img img { transform: scale(1.08); }
 .spot-badge { position: absolute; top: 12px; right: 12px; background: #ef4444; color: white; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
 .spot-info { padding: 20px; }
@@ -722,20 +735,20 @@ onUnmounted(() => {
 .spot-price { font-size: 18px; font-weight: 700; color: #ef4444; }
 
 /* ── Hotels ── */
-.hotels { padding: 100px 60px; background: #ffffff; }
+.hotels { padding: clamp(60px, 8vw, 100px) clamp(16px, 4vw, 60px); background: #ffffff; }
 .hotels-row {
   max-width: 1280px; margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: clamp(16px, 2vw, 24px);
 }
 .hotel-card {
   border-radius: 20px; overflow: hidden; background: white;
   box-shadow: 0 4px 20px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
 }
 .hotel-card:hover { transform: translateY(-8px); box-shadow: 0 20px 60px rgba(0,0,0,0.12); }
-.hotel-img { position: relative; height: 200px; overflow: hidden; flex-shrink: 0; }
-.hotel-img img { width: 100%; height: 200px; object-fit: cover; display: block; transition: transform 0.5s; }
+.hotel-img { position: relative; height: clamp(140px, 20vw, 200px); overflow: hidden; flex-shrink: 0; }
+.hotel-img img { width: 100%; height: clamp(140px, 20vw, 200px); object-fit: cover; display: block; transition: transform 0.5s; }
 .hotel-card:hover .hotel-img img { transform: scale(1.05); }
 .hotel-badge { position: absolute; top: 12px; left: 12px; background: rgba(102,126,234,0.9); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 .hotel-info { padding: 20px; }
@@ -746,10 +759,16 @@ onUnmounted(() => {
 .hotel-price small { font-size: 12px; color: #94a3b8; }
 
 /* ── Experiences ── */
-.exps { padding: 100px 60px; background: #f8fafc; }
-.exp-list { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 80px; }
+.exps { padding: clamp(60px, 8vw, 100px) clamp(16px, 4vw, 60px); background: #f8fafc; }
+.exp-list { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(48px, 8vw, 80px); }
 .exp-item {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+  display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 80px); align-items: center;
+}
+@media (max-width: 768px) {
+  .exp-item, .exp-item.rev { grid-template-columns: 1fr; direction: ltr; gap: 24px; }
+  .exp-pic { height: 240px; }
+  .exp-pic img { height: 240px; }
+  .exp-desc h3 { font-size: clamp(22px, 4vw, 32px); }
 }
 .exp-item.rev { direction: rtl; }
 .exp-item.rev .exp-desc { direction: ltr; }
@@ -758,19 +777,19 @@ onUnmounted(() => {
 .exp-n { position: absolute; top: 20px; left: 20px; font-size: 80px; font-weight: 900; color: rgba(255,255,255,0.15); line-height: 1; }
 .exp-desc { padding: 20px; }
 .exp-tag { display: inline-block; padding: 4px 16px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 20px; font-size: 12px; margin-bottom: 20px; }
-.exp-desc h3 { font-size: 32px; font-weight: 800; color: #1e293b; margin-bottom: 16px; }
-.exp-desc p { font-size: 16px; color: #64748b; line-height: 1.8; margin-bottom: 32px; }
-.exp-desc button { padding: 12px 28px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 30px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+.exp-desc h3 { font-size: clamp(22px, 3.5vw, 32px); font-weight: 800; color: #1e293b; margin-bottom: 16px; }
+.exp-desc p { font-size: clamp(13px, 1.8vw, 16px); color: #64748b; line-height: 1.8; margin-bottom: clamp(20px, 3vw, 32px); }
+.exp-desc button { padding: clamp(10px, 1.5vw, 12px) clamp(20px, 3vw, 28px); background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 30px; font-size: clamp(12px, 1.5vw, 14px); font-weight: 600; cursor: pointer; transition: all 0.3s; }
 .exp-desc button:hover { transform: translateX(4px); box-shadow: 0 8px 24px rgba(102,126,234,0.4); }
 
 /* ── CTA ── */
 .cta {
-  padding: 100px 60px;
+  padding: clamp(60px, 8vw, 100px) clamp(16px, 4vw, 60px);
   background: linear-gradient(135deg, #0f0f23 0%, #1e1b4b 50%, #312e81 100%);
   text-align: center;
 }
-.cta-inner h2 { font-size: clamp(32px, 5vw, 52px); font-weight: 900; color: white; margin-bottom: 16px; }
-.cta-inner p { font-size: 18px; color: rgba(255,255,255,0.6); margin-bottom: 40px; }
+.cta-inner h2 { font-size: clamp(26px, 5vw, 48px); font-weight: 900; color: white; margin-bottom: 16px; }
+.cta-inner p { font-size: clamp(14px, 2vw, 18px); color: rgba(255,255,255,0.6); margin-bottom: clamp(24px, 4vw, 40px); }
 .cta-btns { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
 .btn-pri { padding: 16px 40px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 40px; font-size: 16px; font-weight: 700; text-decoration: none; transition: all 0.3s; }
 .btn-pri:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(102,126,234,0.5); }
@@ -778,7 +797,7 @@ onUnmounted(() => {
 .btn-out:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.7); }
 
 /* ── Footer ── */
-.page-foot { padding: 48px 60px; background: #0a0a1a; text-align: center; }
+.page-foot { padding: clamp(32px, 5vw, 48px) clamp(16px, 4vw, 60px); background: #0a0a1a; text-align: center; }
 .foot-logo { font-size: 20px; font-weight: 900; color: white; letter-spacing: 4px; margin-bottom: 12px; }
 .page-foot p { font-size: 13px; color: rgba(255,255,255,0.3); }
 
