@@ -42,9 +42,9 @@
     </div>
 
     <!-- 酒店网格 -->
-    <div v-else-if="filteredList.length > 0" class="hotels-grid" ref="hotelsGridRef">
+    <div v-else-if="list.length > 0" class="hotels-grid" ref="hotelsGridRef">
       <div
-        v-for="hotel in filteredList"
+        v-for="hotel in list"
         :key="hotel.id"
         class="hotel-card gsap-hotel-card"
         @click="$router.push(`/hotels/${hotel.id}`)"
@@ -87,11 +87,23 @@
 
     <el-empty v-else description="暂无酒店数据" />
 
+    <!-- 分页 -->
+    <div v-if="total > pageSize" class="pagination">
+      <el-pagination
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="total"
+        layout="total, prev, pager, next"
+        @current-change="loadList"
+        background
+      />
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { splitTextByWord } from '@/composables/useGsapAnimation'
@@ -100,6 +112,9 @@ import { getHotelListApi } from '@/api/hotel'
 gsap.registerPlugin(ScrollTrigger)
 
 const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = 16
 const hotelsGridRef = ref<HTMLElement | null>(null)
 const hotelsHeroRef = ref<HTMLElement | null>(null)
 const hotelsEyebrowRef = ref<HTMLElement | null>(null)
@@ -118,30 +133,24 @@ const filters = reactive({
 })
 
 // 从后端API获取
-const allHotels = ref<any[]>([])
+const list = ref<any[]>([])
 
-const filteredList = computed(() => {
-  let list = allHotels.value
-  if (filters.keyword) {
-    list = list.filter(h => h.name.includes(filters.keyword))
-  }
-  if (filters.city) {
-    list = list.filter(h => h.city === filters.city)
-  }
-  if (filters.sortBy === 'stars') {
-    list = [...list].sort((a, b) => (b.starLevel || 0) - (a.starLevel || 0))
-  } else if (filters.sortBy === 'price') {
-    list = [...list].sort((a, b) => (a.minPrice || 0) - (b.minPrice || 0))
-  }
-  return list
-})
-
-async function fetchHotels() {
+async function loadList() {
   try {
     loading.value = true
-    const res: any = await getHotelListApi({ page: 1, pageSize: 50 })
+    const params: any = {
+      page: currentPage.value,
+      pageSize: pageSize,
+      keyword: filters.keyword || undefined,
+      city: filters.city || undefined,
+    }
+    if (filters.sortBy) {
+      params.sortBy = filters.sortBy
+      params.sortOrder = 'desc'
+    }
+    const res: any = await getHotelListApi(params)
     const data = res.data || res
-    allHotels.value = (data.records || []).map((h: any) => ({
+    list.value = (data.records || []).map((h: any) => ({
       id: h.id,
       name: h.name,
       city: h.city,
@@ -154,6 +163,7 @@ async function fetchHotels() {
       img: h.coverImage || `https://picsum.photos/seed/hotel${h.id}/500/400`,
       facilities: h.facilities ? h.facilities.split(',') : [],
     }))
+    total.value = data.total || 0
   } catch (e) {
     console.error('加载酒店列表失败', e)
   } finally {
@@ -163,9 +173,10 @@ async function fetchHotels() {
 
 let debounceTimer: ReturnType<typeof setTimeout>
 function handleFilter() {
+  currentPage.value = 1
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
-    nextTick(() => animateHotelsGrid())
+    loadList()
   }, 400)
 }
 
@@ -234,7 +245,7 @@ function animateHotelsGrid() {
 }
 
 onMounted(() => {
-  fetchHotels()
+  loadList()
   initGsapAnimations()
 })
 
@@ -485,5 +496,11 @@ onUnmounted(() => {
       }
     }
   }
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
 }
 </style>

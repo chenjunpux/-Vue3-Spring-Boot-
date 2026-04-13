@@ -31,7 +31,7 @@
           :key="cat"
           class="cat-tag"
           :class="{ active: activeCategory === cat }"
-          @click="activeCategory = cat; nextTick(() => animateArticlesGrid())"
+          @click="activeCategory = cat; currentPage = 1; loadList()"
         >
           {{ cat }}
         </span>
@@ -41,7 +41,7 @@
     <!-- 文章瀑布流网格 -->
     <div class="articles-grid" ref="articlesGridRef">
       <div
-        v-for="article in filteredArticles"
+        v-for="article in articles"
         :key="article.id"
         class="article-card gsap-article-card"
       >
@@ -73,13 +73,25 @@
       </div>
     </div>
 
-    <el-empty v-if="filteredArticles.length === 0" description="暂无相关游记" />
+    <el-empty v-if="articles.length === 0" description="暂无相关游记" />
+
+    <!-- 分页 -->
+    <div v-if="total > pageSize" class="pagination">
+      <el-pagination
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="total"
+        layout="total, prev, pager, next"
+        @current-change="loadList"
+        background
+      />
+    </div>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { splitTextByWord } from '@/composables/useGsapAnimation'
@@ -95,32 +107,54 @@ const categoryBarRef = ref<HTMLElement | null>(null)
 const articlesGridRef = ref<HTMLElement | null>(null)
 const activeCategory = ref('全部')
 const searchKw = ref('')
+const currentPage = ref(1)
+const total = ref(0)
+const pageSize = 16
 
 const categories = ['全部', '攻略', '美食', '摄影', '亲子', '蜜月', '户外', '文化']
 
 // 从后端API获取
 const articles = ref<any[]>([])
 
-
-const filteredArticles = computed(() => {
-  let list = articles.value
-  if (activeCategory.value !== '全部') {
-    list = list.filter(a => a.category === activeCategory.value)
+async function loadList() {
+  try {
+    const params: any = {
+      page: currentPage.value,
+      pageSize: pageSize,
+      status: 1,
+    }
+    if (activeCategory.value !== '全部') {
+      params.category = activeCategory.value
+    }
+    if (searchKw.value.trim()) {
+      params.keyword = searchKw.value.trim()
+    }
+    const res: any = await getArticleListApi(params)
+    const data = res.data || res
+    articles.value = (data.records || []).map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      excerpt: a.content ? a.content.substring(0, 80) + '…' : '',
+      author: `用户${a.userId}`,
+      category: a.tags ? a.tags.split(',')[0] : '攻略',
+      cover: a.coverImage || `https://picsum.photos/seed/article${a.id}/600/400`,
+      likes: a.likeCount || 0,
+      comments: a.commentCount || 0,
+      tags: a.tags || '',
+    }))
+    total.value = data.total || 0
+  } catch (e) {
+    console.error('加载游记列表失败', e)
   }
-  if (searchKw.value.trim()) {
-    const kw = searchKw.value.trim().toLowerCase()
-    list = list.filter(a =>
-      a.title.toLowerCase().includes(kw) ||
-      a.excerpt.toLowerCase().includes(kw) ||
-      a.author.toLowerCase().includes(kw) ||
-      a.tags?.toLowerCase().includes(kw)
-    )
-  }
-  return list
-})
+}
 
+let debounceTimer: ReturnType<typeof setTimeout>
 function handleSearch() {
-  nextTick(() => animateArticlesGrid())
+  currentPage.value = 1
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    loadList()
+  }, 400)
 }
 
 function initGsapAnimations() {
@@ -193,29 +227,10 @@ function animateArticlesGrid() {
 }
 
 onMounted(() => {
-  fetchArticles()
+  loadList()
   initGsapAnimations()
 })
 
-async function fetchArticles() {
-  try {
-    const res: any = await getArticleListApi({ page: 1, pageSize: 50, status: 1 })
-    const data = res.data || res
-    articles.value = (data.records || []).map((a: any) => ({
-      id: a.id,
-      title: a.title,
-      excerpt: a.content ? a.content.substring(0, 80) + '…' : '',
-      author: `用户${a.userId}`,
-      category: a.tags ? a.tags.split(',')[0] : '攻略',
-      cover: a.coverImage || `https://picsum.photos/seed/article${a.id}/600/400`,
-      likes: a.likeCount || 0,
-      comments: a.commentCount || 0,
-      tags: a.tags || '',
-    }))
-  } catch (e) {
-    console.error('加载游记列表失败', e)
-  }
-}
 
 onUnmounted(() => {
   ScrollTrigger.getAll().forEach(t => t.kill())
@@ -479,5 +494,11 @@ onUnmounted(() => {
       }
     }
   }
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
 }
 </style>

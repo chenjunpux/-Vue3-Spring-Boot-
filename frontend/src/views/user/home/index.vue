@@ -43,7 +43,7 @@
     </section>
 
     <!-- ── Stats ── -->
-    <section class="stats" ref="statsRef">
+    <section class="stats rounded-none" ref="statsRef" style="border-radius: 0 !important;">
       <div class="stats-row">
         <div v-for="s in stats" :key="s.label" class="stat-cell" :ref="el => el && statCellsRef.push(el as HTMLElement)">
           <div class="stat-n" :ref="el => el && statNumRefs.push(el as HTMLElement)" :data-target="s.v.replace(/,/g,'')" :data-suffix="s.s">{{ s.v }}<small>{{ s.s }}</small></div>
@@ -684,9 +684,10 @@ onUnmounted(() => {
 }
 
 /* ── Stats ── */
-.stats { background: #0f0f23; overflow: hidden; }
+.stats { background: #0f0f23; width: 100%; padding: 80px 60px; border-radius: 0 !important; overflow: hidden !important; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%) !important; }
 .stats-row {
-  max-width: 1200px; margin: 0 auto;
+  width: 100%;
+  border-radius: 0 !important;
   display: flex; justify-content: space-around; gap: clamp(16px, 3vw, 40px);
   flex-wrap: wrap;
 }
