@@ -40,6 +40,7 @@
           <thead>
             <tr>
               <th>ID</th>
+              <th>序号</th>
               <th>头像</th>
               <th>昵称</th>
               <th>手机号</th>
@@ -50,8 +51,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in tableData" :key="row.id">
+            <tr v-for="(row, idx) in tableData" :key="row.id">
               <td class="font-mono">{{ row.id }}</td>
+              <td>{{ (page - 1) * pageSize + idx + 1 }}</td>
               <td>
                 <div class="avatar">
                   <div class="w-10 rounded-full">

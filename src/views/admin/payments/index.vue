@@ -82,13 +82,14 @@
         <table class="table table-zebra w-full text-sm">
           <thead>
             <tr>
-              <th>ID</th><th>支付单号</th><th>关联订单</th><th>用户信息</th><th>类型</th>
+              <th>ID</th><th>序号</th><th>支付单号</th><th>关联订单</th><th>用户信息</th><th>类型</th>
               <th>消费内容</th><th>金额</th><th>支付方式</th><th>状态</th><th>时间</th><th>操作</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in tableData" :key="row.id">
+            <tr v-for="(row, idx) in tableData" :key="row.id">
               <td class="font-mono">{{ row.id }}</td>
+              <td>{{ (page - 1) * pageSize + idx + 1 }}</td>
               <td class="font-mono text-xs max-w-32 truncate">{{ row.paymentNo }}</td>
               <td class="font-mono text-xs max-w-32 truncate">{{ row.orderNo }}</td>
               <td>
