@@ -21,6 +21,7 @@ CREATE TABLE users (
     role            TINYINT DEFAULT 1 COMMENT '1普通用户 2管理员',
     status          TINYINT DEFAULT 1 COMMENT '1正常 0封禁',
     last_login      DATETIME COMMENT '最后登录时间',
+    menu_permissions VARCHAR(500) COMMENT '菜单权限',
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
@@ -50,6 +51,18 @@ CREATE TABLE spots (
     hot_score       INT DEFAULT 0 COMMENT '热度分数',
     view_count      INT DEFAULT 0 COMMENT '浏览次数',
     status          TINYINT DEFAULT 1 COMMENT '1上架 0下架',
+    score           DECIMAL(3,1) COMMENT '评分',
+    traffic         TEXT COMMENT '交通指南',
+    tips            TEXT COMMENT '游览贴士',
+    section1_title  VARCHAR(200) COMMENT '章节1标题',
+    section1_content TEXT COMMENT '章节1内容',
+    section1_image  VARCHAR(500) COMMENT '章节1图片',
+    section2_title  VARCHAR(200) COMMENT '章节2标题',
+    section2_content TEXT COMMENT '章节2内容',
+    section2_image  VARCHAR(500) COMMENT '章节2图片',
+    section3_title  VARCHAR(200) COMMENT '章节3标题',
+    section3_content TEXT COMMENT '章节3内容',
+    section3_image  VARCHAR(500) COMMENT '章节3图片',
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
@@ -120,6 +133,9 @@ CREATE TABLE orders (
     contact_phone   VARCHAR(20) COMMENT '联系电话',
     quantity        INT DEFAULT 1 COMMENT '数量',
     visit_date      DATE COMMENT '游览/入住日期',
+    coupon_id       BIGINT COMMENT '优惠券ID',
+    coupon_name     VARCHAR(100) COMMENT '优惠券名称快照',
+    discount_amount DECIMAL(10,2) DEFAULT 0 COMMENT '优惠券抵扣金额',
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted         TINYINT DEFAULT 0 COMMENT '逻辑删除',
@@ -357,6 +373,7 @@ CREATE TABLE system_notifications (
     cover_image     VARCHAR(500) COMMENT '封面图',
     link_url        VARCHAR(500) COMMENT '跳转链接',
     is_published    TINYINT DEFAULT 0 COMMENT '是否发布 0草稿 1已发布',
+    target_type     VARCHAR(30) COMMENT '推送类型',
     published_at    DATETIME COMMENT '发布时间',
     start_time      DATETIME COMMENT '展示开始时间',
     end_time        DATETIME COMMENT '展示结束时间',
@@ -472,11 +489,11 @@ CREATE TABLE operation_logs (
 
 -- 插入管理员账号 (密码: admin123)
 INSERT INTO users (username, password, nickname, role, status, created_at) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '系统管理员', 2, 1, NOW());
+('admin', '$2a$10$O.JyFO7SDxq47oUiHQLX0eCZxsoQkPfUhrIS8bKJSeYkahB6H0d3i', '系统管理员', 2, 1, NOW());
 
 -- 插入普通用户账号 (密码: user123)
 INSERT INTO users (username, password, nickname, phone, role, status, created_at) VALUES
-('testuser', '$2a$10$rDkPvvAFV8kRQAJb5hX3/.V8pVRVpVRVpVRVpVRVpVRVpVRVpVRV', '测试用户', '13800138000', 1, 1, NOW());
+('testuser', '$2a$10$Wx1HQbt6fgAmP9Wer6nVrOyCDeTqdxrlv.QkHg5e2XP8YSgrf1fES', '测试用户', '13800138000', 1, 1, NOW());
 
 -- 插入景点数据
 INSERT INTO spots (name, cover_image, city, address, longitude, latitude, description, ticket_price, open_time, suggested_time, level, tags, hot_score, view_count, status) VALUES
