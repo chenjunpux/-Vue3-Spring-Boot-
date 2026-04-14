@@ -22,12 +22,13 @@
         <table class="table table-zebra w-full text-sm">
           <thead>
             <tr>
-              <th>ID</th><th>封面</th><th>标题</th><th>作者</th><th>浏览</th><th>点赞</th><th>置顶</th><th>状态</th><th>发布时间</th><th>操作</th>
+              <th>ID</th><th>序号</th><th>封面</th><th>标题</th><th>作者</th><th>浏览</th><th>点赞</th><th>置顶</th><th>状态</th><th>发布时间</th><th>操作</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in tableData" :key="row.id">
+            <tr v-for="(row, idx) in tableData" :key="row.id">
               <td class="font-mono">{{ row.id }}</td>
+              <td>{{ (page - 1) * pageSize + idx + 1 }}</td>
               <td>
                 <div class="avatar"><div class="w-12 rounded">
                     <img v-if="row.coverImage" :src="row.coverImage" :alt="row.title" />

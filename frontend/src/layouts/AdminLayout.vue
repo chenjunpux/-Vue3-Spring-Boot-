@@ -10,12 +10,21 @@
     <div class="drawer-content flex flex-col min-h-screen bg-base-200">
       <!-- 顶部导航栏 -->
       <div class="navbar sticky top-0 bg-base-100 z-10 shadow-md px-4">
-        <!-- 移动端菜单按钮 -->
-        <div class="flex-1">
-          <label for="left-sidebar-drawer" class="btn btn-primary drawer-button lg:hidden">
-            <Bars3Icon class="w-5 h-5" />
-          </label>
-          <h1 class="text-2xl font-semibold ml-2 md:ml-4">{{ pageTitle }}</h1>
+        <div>
+          <!-- 移动端菜单按钮 + 桌面端侧边栏折叠按钮 -->
+          <div class="flex items-center gap-1">
+            <label for="left-sidebar-drawer" class="btn btn-ghost btn-sm drawer-button lg:hidden">
+              <Bars3Icon class="w-5 h-5" />
+            </label>
+            <button class="btn btn-ghost btn-sm btn-square hidden lg:inline-flex" @click="toggleSidebar"
+              :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'">
+              <ChevronLeftIcon
+                :class="['w-5 h-5 transition-transform duration-300', sidebarCollapsed ? 'rotate-180' : '']" />
+            </button>
+          </div>
+          <div>
+            <h1 class="text-2xl font-semibold ml-2 md:ml-4">{{ pageTitle }}</h1>
+          </div>
         </div>
 
         <div class="flex-none gap-2">
@@ -47,8 +56,12 @@
               <li class="menu-title">
                 <span>{{ nickname }}</span>
               </li>
-              <li><a @click="router.push('/admin/settings')"><Cog6ToothIcon class="w-5 h-5" />系统设置</a></li>
-              <li><a @click="handleLogout"><ArrowRightStartOnRectangleIcon class="w-5 h-5" />退出登录</a></li>
+              <li><a @click="router.push('/admin/settings')">
+                  <Cog6ToothIcon class="w-5 h-5" />系统设置
+                </a></li>
+              <li><a @click="handleLogout">
+                  <ArrowRightStartOnRectangleIcon class="w-5 h-5" />退出登录
+                </a></li>
             </ul>
           </div>
         </div>
@@ -70,51 +83,81 @@
     <!-- ========== Left Sidebar（左侧边栏） ========== -->
     <div class="drawer-side z-30">
       <label for="left-sidebar-drawer" class="drawer-overlay"></label>
-      <ul class="menu pt-2 w-72 min-h-full bg-base-100 text-base-content">
 
-        <!-- 关闭按钮（移动端） -->
-        <button class="btn btn-ghost bg-base-300 btn-circle z-50 top-0 right-0 mt-4 mr-2 absolute lg:hidden" @click="drawerOpen = false">
-          <XMarkIcon class="w-5 h-5" />
-        </button>
-
+      <!-- 侧边栏主体（折叠/展开） -->
+      <aside :class="[
+        sidebarCollapsed ? 'w-16' : 'w-64',
+        'flex-shrink-0',
+        'transition-all', 'duration-300', 'ease-in-out',
+        'h-full',
+        'bg-base-100',
+        'border-r', 'border-base-300',
+        'flex', 'flex-col',
+        'relative'
+      ]">
         <!-- Logo -->
-        <li class="mb-4 font-semibold text-xl">
-          <router-link to="/admin/dashboard">
-            <img class="mask mask-squircle w-10" src="https://placehold.co/80x80/3b82f6/ffffff?text=Logo" alt="Logo" />
-            智慧旅游后台
-          </router-link>
-        </li>
+        <div class="flex items-center gap-3 px-3 h-16 border-b border-base-300 flex-shrink-0 overflow-hidden">
+          <img class="mask mask-squircle w-9 flex-shrink-0" src="https://placehold.co/80x80/3b82f6/ffffff?text=Logo"
+            alt="Logo" />
+          <span v-if="!sidebarCollapsed"
+            class="font-semibold text-sm text-base-content truncate whitespace-nowrap transition-all duration-300">智慧旅游后台</span>
+        </div>
 
-        <!-- 菜单项 -->
-        <template v-for="item in menuItems" :key="item.path">
-          <!-- 有子菜单 -->
-          <li v-if="item.children">
-            <details :open="isSubmenuActive(item)">
-              <summary>
-                <component :is="item.icon" class="w-6 h-6" />
-                {{ item.name }}
-                <ChevronDownIcon class="w-4 h-4 ml-auto transition-transform duration-300" />
-              </summary>
-              <ul class="menu menu-compact">
-                <li v-for="child in item.children" :key="child.path">
-                  <router-link :to="child.path" :class="{ 'active': currentRoute === child.path }">
-                    <component :is="child.icon" class="w-5 h-5" />
-                    {{ child.name }}
-                  </router-link>
-                </li>
-              </ul>
-            </details>
-          </li>
+        <!-- 菜单区域（可滚动） -->
+        <nav class="flex-1 overflow-y-auto py-3 px-2">
+          <template v-for="item in menuItems" :key="item.path">
 
-          <!-- 无子菜单 -->
-          <li v-else>
-            <router-link :to="item.path" :class="{ 'active': currentRoute === item.path }">
-              <component :is="item.icon" class="w-6 h-6" />
-              {{ item.name }}
-            </router-link>
-          </li>
-        </template>
-      </ul>
+            <!-- 有子菜单 -->
+            <li v-if="item.children" class="list-none mb-1">
+              <div :class="[
+                'group flex items-center gap-3 px-2 py-2.5 rounded-lg cursor-pointer select-none',
+                'text-sm font-medium',
+                sidebarCollapsed ? 'justify-center' : '',
+                openSubmenus.includes(item.path) ? 'bg-base-200 text-base-content' : 'text-base-content/60 hover:bg-base-200 hover:text-base-content'
+              ]" :title="sidebarCollapsed ? item.name : undefined" @click="toggleSubmenu(item.path)">
+                <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
+                <span v-if="!sidebarCollapsed" class="flex-1 truncate transition-all duration-300">{{ item.name
+                  }}</span>
+                <ChevronDownIcon v-if="!sidebarCollapsed"
+                  :class="['w-4 h-4 flex-shrink-0 transition-transform duration-300', openSubmenus.includes(item.path) ? 'rotate-180' : '']" />
+              </div>
+              <!-- 子菜单 -->
+              <Transition name="submenu">
+                <ul v-if="!sidebarCollapsed && openSubmenus.includes(item.path)"
+                  class="mt-1 flex flex-col gap-0.5 border-l border-base-300 pl-3">
+                  <li v-for="child in item.children" :key="child.path" class="list-none">
+                    <router-link :to="child.path" :class="[
+                      'flex items-center gap-3 px-2 py-2 rounded-md text-sm',
+                      'transition-colors duration-200',
+                      currentRoute === child.path
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-base-content/60 hover:bg-base-200 hover:text-base-content'
+                    ]">
+                      <component :is="child.icon" class="w-4 h-4 flex-shrink-0" />
+                      <span class="truncate">{{ child.name }}</span>
+                    </router-link>
+                  </li>
+                </ul>
+              </Transition>
+            </li>
+
+            <!-- 无子菜单 -->
+            <li v-else class="list-none mb-0.5">
+              <router-link :to="item.path" :class="[
+                'flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium',
+                'transition-colors duration-200',
+                sidebarCollapsed ? 'justify-center' : '',
+                currentRoute === item.path
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-base-content/60 hover:bg-base-200 hover:text-base-content'
+              ]" :title="sidebarCollapsed ? item.name : undefined">
+                <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
+                <span v-if="!sidebarCollapsed" class="truncate transition-all duration-300">{{ item.name }}</span>
+              </router-link>
+            </li>
+          </template>
+        </nav>
+      </aside>
     </div>
   </div>
 
@@ -164,8 +207,7 @@
 
   <!-- ========== 全局 Toast 通知 ========== -->
   <div class="toast toast-end z-[100]" style="pointer-events: none">
-    <div v-if="toast.show" :class="toast.class" class="alert shadow-lg pointer-events-auto"
-      style="min-width: 220px">
+    <div v-if="toast.show" :class="toast.class" class="alert shadow-lg pointer-events-auto" style="min-width: 220px">
       <span>{{ toast.message }}</span>
     </div>
   </div>
@@ -190,6 +232,7 @@ import {
   ArrowRightStartOnRectangleIcon,
   XMarkIcon,
   ChevronDownIcon,
+  ChevronLeftIcon,
   HomeIcon,
   MapPinIcon,
   BuildingOfficeIcon,
@@ -211,6 +254,8 @@ const userStore = useUserStore()
 
 // ===== 状态 =====
 const drawerOpen = ref(false)
+const sidebarCollapsed = ref(false)
+const openSubmenus = ref<string[]>(['settings'])  // 默认展开 settings 子菜单
 const isDark = ref(false)
 const showNotifications = ref(false)
 const notifications = ref<any[]>([])
@@ -235,7 +280,7 @@ function showToast(message: string, type: 'success' | 'error' | 'warning' | 'inf
 }
 
 // 挂到 window，方便子页面调用
-;(window as any).adminToast = showToast
+; (window as any).adminToast = showToast
 
 // ===== 用户信息 =====
 const nickname = computed(() => userStore.userInfo?.nickname || '管理员')
@@ -284,6 +329,23 @@ const menuItems = [
   },
 ]
 
+// ===== 侧边栏折叠 =====
+function toggleSidebar() {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+  if (sidebarCollapsed.value) {
+    openSubmenus.value = []
+  }
+}
+
+function toggleSubmenu(path: string) {
+  const idx = openSubmenus.value.indexOf(path)
+  if (idx > -1) {
+    openSubmenus.value.splice(idx, 1)
+  } else {
+    openSubmenus.value.push(path)
+  }
+}
+
 // ===== 主题切换 =====
 function toggleTheme() {
   isDark.value = !isDark.value
@@ -302,7 +364,7 @@ async function fetchUnreadCount() {
   try {
     const res = await notificationApi.unreadCount()
     if (res.code === 200) unreadCount.value = res.data || 0
-  } catch {}
+  } catch { }
 }
 
 async function fetchNotifications() {
@@ -324,7 +386,7 @@ async function markAllRead() {
       unreadCount.value = 0
       notifications.value.forEach((n: any) => { n.isRead = 1 })
     }
-  } catch {}
+  } catch { }
 }
 
 async function handleNotifClick(item: any) {
@@ -333,7 +395,7 @@ async function handleNotifClick(item: any) {
       await notificationApi.markAsRead(item.id)
       item.isRead = 1
       unreadCount.value = Math.max(0, unreadCount.value - 1)
-    } catch {}
+    } catch { }
   }
   showNotifications.value = false
   if (item.relatedId) router.push('/admin/orders')
@@ -368,19 +430,28 @@ onMounted(() => {
   fetchNotifications()
 })
 </script>
+<style>
+.navbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+</style>
 
 
-/* 路由激活指示器（与 DaisyUI 模板一致） */
+/* ========== 侧边栏折叠动画 ========== */
+.submenu-enter-active,
+.submenu-leave-active {
+transition: all 0.2s ease;
+overflow: hidden;
+}
+.submenu-enter-from,
+.submenu-leave-to {
+opacity: 0;
+transform: translateY(-4px);
+}
+
+/* 菜单项 hover / active 样式（shadcn 风格） */
 .router-link-active::before {
-  content: '';
-  position: absolute;
-  inset-y-0 left-0 w-1 rounded-tr-md rounded-br-md bg-primary;
-}
-
-/* 子菜单样式 */
-details summary .chevron {
-  transition: transform 0.3s;
-}
-details[open] summary .chevron {
-  transform: rotate(180deg);
+display: none;
 }

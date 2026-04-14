@@ -32,12 +32,13 @@
         <table class="table table-zebra w-full text-sm">
           <thead>
             <tr>
-              <th>ID</th><th>标题</th><th>内容</th><th>类型</th><th>发送范围</th><th>状态</th><th>发布时间</th><th>创建时间</th><th>操作</th>
+              <th>ID</th><th>序号</th><th>标题</th><th>内容</th><th>类型</th><th>发送范围</th><th>状态</th><th>发布时间</th><th>创建时间</th><th>操作</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in tableData" :key="row.id">
+            <tr v-for="(row, idx) in tableData" :key="row.id">
               <td class="font-mono">{{ row.id }}</td>
+              <td>{{ (page - 1) * pageSize + idx + 1 }}</td>
               <td class="font-medium max-w-xs truncate">{{ row.title }}</td>
               <td class="max-w-xs truncate">{{ row.content }}</td>
               <td>

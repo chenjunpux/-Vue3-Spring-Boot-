@@ -42,7 +42,7 @@
         <table class="table table-zebra w-full text-sm">
           <thead>
             <tr>
-              <th>#</th>
+              <th>序号</th>
               <th>ID</th>
               <th>订单号</th>
               <th>用户ID</th>
@@ -57,7 +57,7 @@
           </thead>
           <tbody>
             <tr v-for="(row, idx) in tableData" :key="row.id">
-              <td>{{ idx + 1 }}</td>
+              <td>{{ (page - 1) * pageSize + idx + 1 }}</td>
               <td class="font-mono">{{ row.id }}</td>
               <td class="font-mono text-xs">{{ row.orderNo }}</td>
               <td>{{ row.userId }}</td>
